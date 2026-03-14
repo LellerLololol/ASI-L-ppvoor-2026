@@ -204,3 +204,22 @@ Fixed two root causes of ghost wall-clipping:
 
 1. `ENEMY_SPEED` was 3 which doesn't divide `CELL_SIZE` (32) evenly, so ghosts were never detected as tile-aligned and could never check walls. Changed to 4 (and `EATEN_SPEED` from 6→8).
 2. Rewrote `_follow_path()` in `game/entities/enemy.py` to validate every cell transition against the grid before moving, and to snap pixel position to exact grid coordinates to prevent cumulative drift. Verified with automated test: 0 wall violations across 2000 frames.
+
+---
+
+### Prompt 9
+
+**The prompt:**
+
+> "New problem, now the path finding algortihm works correctly and it is TOO GOOD: the ghosts just straigh beeline to the player with no counterplay possible."
+
+**Commits:**
+
+- `84fe1e24e07afee59cda185acdfc2ec747f5213e` - feat: Implement classic Pac-Man Scatter/Chase cycle and AI balancing
+
+**Explanation of changes:**
+To balance the perfect pathfinding, implemented the classic Pac-Man "Scatter vs Chase" alternating modes:
+
+1. `game/settings.py`: Added constants `SCATTER_DURATION` (~7s) and `CHASE_DURATION` (~20s). Reduced base `ENEMY_SPEED` from 4 to 2 (Player speed is 4) so the player can actually outrun them on straightaways.
+2. `game/entities/enemy.py`: Assigned individual corner targets to each ghost type (Blinky=Top-Right, Pinky=Top-Left, Inky=Bottom-Right, Clyde=Bottom-Left).
+3. `game/engine.py`: Wired a `mode_timer` into the game loop. Every ~20 seconds, ghosts universally stop chasing and fall back/scatter towards their respective corners for ~7s. As in the classic arcade game, changing modes immediately reverses ghost direction, creating a rhythmic window of opportunity for the player to counter-attack or escape.

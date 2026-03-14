@@ -19,7 +19,7 @@ from game.settings import (
     SPEED_BOOST_SPAWN_INTERVAL, OBSTACLE_SPEED,
     SCORE_DOT, SCORE_POWER_PELLET, SCORE_GHOST_EAT,
     COLOR_BLINKY, COLOR_PINKY, COLOR_INKY, COLOR_CLYDE,
-    MAZE_COLS, MAZE_ROWS,
+    MAZE_COLS, MAZE_ROWS, SCATTER_DURATION, CHASE_DURATION,
 )
 from game.maze.generator import MazeGenerator
 from game.maze.renderer import MazeRenderer
@@ -57,6 +57,9 @@ class Game:
         self.speed_boost_timer = 0
         self.speed_boost_spawn_cd = SPEED_BOOST_SPAWN_INTERVAL
         self.ghost_eat_combo = 1  # doubles per ghost eaten in one power-up
+
+        self.is_scattering = True
+        self.mode_timer = SCATTER_DURATION
 
         # ---- Maze ----
         self.maze_gen = MazeGenerator()
@@ -142,7 +145,18 @@ class Game:
                 self.ghost_eat_combo = 1
                 for enemy in self.enemies:
                     if enemy.state == "FRIGHTENED":
-                        enemy.state = "CHASE"
+                        enemy.state = "SCATTER" if self.is_scattering else "CHASE"
+
+        if self.power_timer == 0:
+            self.mode_timer -= 1
+            if self.mode_timer <= 0:
+                self.is_scattering = not self.is_scattering
+                self.mode_timer = SCATTER_DURATION if self.is_scattering else CHASE_DURATION
+                for enemy in self.enemies:
+                    if enemy.state in ("CHASE", "SCATTER"):
+                        enemy.state = "SCATTER" if self.is_scattering else "CHASE"
+                        # Reversing direction is a classic Pac-Man mechanic on wave switches
+                        enemy.direction = (-enemy.direction[0], -enemy.direction[1])
 
         if self.speed_boost_timer > 0:
             self.speed_boost_timer -= 1
@@ -344,9 +358,12 @@ class Game:
             self.player.direction = (0, 0)
             self.player.queued_direction = (0, 0)
 
+            self.is_scattering = True
+            self.mode_timer = SCATTER_DURATION
+
             spawns = self.maze_gen.get_enemy_spawns()
             for i, enemy in enumerate(self.enemies):
                 enemy.pixel_x = spawns[i][0] * CELL_SIZE
                 enemy.pixel_y = spawns[i][1] * CELL_SIZE
-                enemy.state = "CHASE"
+                enemy.state = "SCATTER"
                 enemy.direction = (0, 0)
