@@ -155,6 +155,7 @@ class Player(pygame.sprite.Sprite):
         # ---- movement state ----
         self.direction: tuple = DIR_NONE
         self.queued_direction: tuple = DIR_NONE
+        self.movement_accum: float = 0.0
 
         # ---- animation / effects ----
         self._particles: list[_Particle] = []
@@ -193,7 +194,11 @@ class Player(pygame.sprite.Sprite):
         if self.direction != DIR_NONE and self.queued_direction == (-self.direction[0], -self.direction[1]):
             self.direction = self.queued_direction
 
-        for _ in range(int(self.speed)):
+        self.movement_accum += self.speed
+        pixels_to_move = int(self.movement_accum)
+        self.movement_accum -= pixels_to_move
+
+        for _ in range(pixels_to_move):
             # 1. Try to turn when exactly on a tile intersection
             if self._is_tile_aligned():
                 if self._can_move_dist(self.queued_direction, 1, wall_rects):

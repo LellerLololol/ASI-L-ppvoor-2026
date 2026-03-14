@@ -249,3 +249,26 @@ To balance the perfect pathfinding, implemented the classic Pac-Man "Scatter vs 
 The team updated ghost speeds to fractional values (`ENEMY_SPEED = 1.6`) in `settings.py`. The previous ghost movement logic relied on integers that cleanly divided into `CELL_SIZE` (`32`) to achieve perfect tile alignments (`pixel_x % 32 == 0`). Fractional speeds broke this, preventing ghosts from ever snapping to intersections to check walls.
 
 Fixed by bringing the ghosts strictly to the same pixel-by-pixel robust movement standard implemented by the team for the player in the previous prompt, but enhanced for fractions. In `game/entities/enemy.py`, ghost pixel coordinates were cast to strictly `int`. A `movement_accum` float was added to `Enemy.__init__`. During `_follow_path()`, the ghost adds its speed (`1.6`) to the accumulator every frame, then peels off the integer part (`1` or `2`) and moves exactly that many discrete pixels inside a loop. This entirely eliminates fractional position drift and guarantees that ghosts will perfectly hit `X % 32 == 0` intersections to execute their pathfinding and wall collision logic, no matter what complex math multiplier or floating point speed is configured.
+
+---
+
+### Prompt 11
+
+**The prompt:**
+
+> "Make all speeds faster like 1.5x"
+
+**Commits:**
+
+- `ca8307c2b96381e15abc4bf42e18ac6bc38c7158` - feat: Increase all game speeds by 1.5x and add float accumulator to player
+
+**Explanation of changes:**
+Multiplied all movement speed constants in `game/settings.py` by 1.5:
+
+- `PLAYER_SPEED` from 2 to 3
+- `ENEMY_SPEED` from 1.6 to 2.4
+- `ENEMY_FRIGHTENED_SPEED` from 1 to 1.5
+- `ENEMY_EATEN_SPEED` from 6 to 9
+- `OBSTACLE_SPEED` from 2 to 3
+
+Additionally, proactively updated `player.py`'s movement logic to use a `movement_accum` float accumulator just like the ghosts do. The previous logic cast `self.speed` directly to an `int()`. Since the player base speed is now `3`, grabbing a 1.5x speed boost changes their speed to `4.5`. The old logic would have truncated this to exactly `4`, stripping away the `.5` advantage entirely and nerfing the powerup. The float accumulator allows the player to correctly bank and consume those fractions to effectively move at perfectly `4.5` pixels per frame.
