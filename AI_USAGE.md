@@ -289,3 +289,20 @@ Additionally, proactively updated `player.py`'s movement logic to use a `movemen
 The original collision logic in `game/engine.py` strictly relied on comparing mathematical grid indices (e.g., `if dot.grid_pos == player_grid`), meaning collisions only registered when the dead-center of the player perfectly overlapped the dead-center of the item or enemy tile.
 
 This was resolved by replacing all grid coordinate checks with standard `pygame.Rect.colliderect()` intersection evaluations. Bounding box pixel coordinates are now generated for the player, enemies, speed boosts, power pellets, dots, and moving obstacles. A universal 6-pixel 'forgiveness' margin was applied to these rectangles (shrinking a 32x32 hit box down to 20x20 in the center) so that players can cleanly sideswipe through dots and aren't unfairly clipped by enemies when barely grazing their outer edges.
+
+---
+
+### Prompt 13
+
+**The prompt:**
+
+> "the spinning blade is moving through walls"
+
+**Commits:**
+
+- `[Paste Commit Hash Here]` - fix: Apply float accumulator pixel-by-pixel movement to MovingObstacle to stop wall clipping
+
+**Explanation of changes:**
+The user's previous modification to increase speeds by 1.5x set `OBSTACLE_SPEED = 3`. The `MovingObstacle` class in `game/items/collectibles.py` still relied on the old logic (`pixel_x % 32 == 0`) to detect map intersections and turn away from walls. Because a speed of 3 doesn't divide 32 evenly, the obstacle skipped right past the alignment check and clipped directly through the walls.
+
+Fixed by refactoring `MovingObstacle.update()` to use the exact same float accumulator and pixel-by-pixel movement loop that the Player and Ghosts were upgraded to use in earlier commits. The obstacle now builds up fractional speed in an accumulator, extracts the integer distance, and processes wall collisions and turns one pixel at a time. This guarantees that the obstacle always perfectly slides onto `X % 32 == 0` alignments, reliably detecting and bouncing off walls regardless of its speed.
