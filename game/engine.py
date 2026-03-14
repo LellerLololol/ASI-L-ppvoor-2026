@@ -272,7 +272,7 @@ class Game:
                     self.score += SCORE_GHOST_EAT * self.ghost_eat_combo
                     self.ghost_eat_combo *= 2
                     enemy.state = "EATEN"
-                elif enemy.state == "CHASE":
+                elif enemy.state in ("CHASE", "SCATTER"):
                     self._player_dies()
                     return
 

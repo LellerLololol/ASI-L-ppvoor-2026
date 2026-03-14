@@ -349,6 +349,25 @@ Because both the player and the enemies now securely rely entirely on the grid a
 
 **The prompt:**
 
+> "the player passed through the ghost even though now they are on the same system"
+
+**Commits:**
+
+- `435953065df59c327874cf0fd00fcd072b2a5608` - fix: Restore player death collision when ghosts are in the SCATTER state
+
+**Explanation of changes:**
+The user's reported bug was not actually a collision coordinate issue, but rather a state machine oversight. In Prompt 9, a new `"SCATTER"` mode was added to the game, alternating with `"CHASE"`.
+
+However, the ghost collision logic in `game/engine.py` explicitly checked `elif enemy.state == "CHASE":` to trigger a player death. If the player happened to run into a ghost during the 7-second `"SCATTER"` window, the collision was detected but ignored by the game engine, allowing the player to pass cleanly through unharmed.
+
+This was resolved by updating the game loop to check `elif enemy.state in ("CHASE", "SCATTER"):`, restoring lethality to the ghosts during their retreat phase.
+
+---
+
+### Prompt 17
+
+**The prompt:**
+
 > "New problem: enemies (ghosts) when dead should go to their respawn point and do that by traveling through walls. Also, add a 3 second waiting windows upon starting the game."
 
 **Commits:**
