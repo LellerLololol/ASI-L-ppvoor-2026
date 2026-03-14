@@ -58,7 +58,7 @@ def get_random_direction(
     valid = []
     for dx, dy in _DIRECTIONS:
         nx, ny = cx + dx, cy + dy
-        if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
+        if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] != 1:
             valid.append((dx, dy))
 
     if not valid:

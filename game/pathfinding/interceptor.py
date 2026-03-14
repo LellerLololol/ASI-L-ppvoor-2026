@@ -51,7 +51,7 @@ def get_intercept_target(
     target_row = max(0, min(rows - 1, target_row))
 
     # If the projected cell is passable, use it
-    if grid[target_row][target_col] == 0:
+    if grid[target_row][target_col] != 1:
         return (target_col, target_row)
 
     # Otherwise, spiral outwards to find the nearest open cell
@@ -59,7 +59,7 @@ def get_intercept_target(
         for dr in range(-radius, radius + 1):
             for dc in range(-radius, radius + 1):
                 r, c = target_row + dr, target_col + dc
-                if 0 <= r < rows and 0 <= c < cols and grid[r][c] == 0:
+                if 0 <= r < rows and 0 <= c < cols and grid[r][c] != 1:
                     return (c, r)
 
     # Fallback: just target the player directly

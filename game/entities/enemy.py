@@ -105,12 +105,9 @@ class Enemy:
             my_pos = self.get_grid_pos()
 
             if self.state == "EATEN":
-                # Head back to spawn ignoring walls
+                # Head back to spawn (the arrival check is in _follow_path)
                 spawn = (self.spawn_x, self.spawn_y)
                 self._path = astar.find_path(grid, my_pos, spawn, ignore_walls=True)
-                if my_pos == spawn:
-                    self.state = "SCATTER"
-                    self._path = []
             elif self.state == "FRIGHTENED":
                 # Run away: pick a random direction
                 self._path = []
@@ -210,6 +207,14 @@ class Enemy:
             and self.pixel_y % self.tile_size == 0
         )
 
+    def _is_passable(self, grid: list[list[int]], col: int, row: int) -> bool:
+        """Return True if grid[row][col] is passable (0=path, 2=spawn box)."""
+        rows = len(grid)
+        cols = len(grid[0]) if rows else 0
+        if not (0 <= row < rows and 0 <= col < cols):
+            return False
+        return grid[row][col] != 1
+
     def _follow_path(self, grid: list[list[int]]) -> None:
         """Move towards the next waypoint, with strict wall collision.
 
@@ -227,6 +232,18 @@ class Enemy:
         for _ in range(pixels_to_move):
             if self._is_tile_aligned():
                 cx, cy = self.get_grid_pos()
+
+                # --- Spawn arrival check (runs every aligned frame) ---
+                if self.state == "EATEN":
+                    spawn = (self.spawn_x, self.spawn_y)
+                    if (cx, cy) == spawn:
+                        self.state = "SCATTER"
+                        self._path = []
+                        self._path_index = 0
+                        self._repath_cd = 0  # force immediate repath next frame
+                        self.speed = self.base_speed
+                        self.movement_accum = 0.0
+                        return  # stop moving this frame, resume next
 
                 # Determine next desired direction
                 next_dir = self.direction
@@ -253,13 +270,13 @@ class Enemy:
                 else:
                     # No path, already moving — check if we can keep going
                     nx, ny = cx + self.direction[0], cy + self.direction[1]
-                    if not (0 <= ny < rows and 0 <= nx < cols and (is_eaten or grid[ny][nx] != 1)):
+                    if not (is_eaten or self._is_passable(grid, nx, ny)):
                         # Blocked — pick a new random valid direction
                         next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
 
                 # Validate the chosen direction against the grid
                 nx, ny = cx + next_dir[0], cy + next_dir[1]
-                if 0 <= ny < rows and 0 <= nx < cols and (is_eaten or grid[ny][nx] != 1):
+                if is_eaten or self._is_passable(grid, nx, ny):
                     self.direction = next_dir
                 else:
                     # Even the chosen direction is blocked — stop

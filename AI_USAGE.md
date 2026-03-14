@@ -364,6 +364,29 @@ This was resolved by updating the game loop to check `elif enemy.state in ("CHAS
 
 ---
 
+### Prompt 19
+
+**The prompt:**
+
+> "analyse how respawning for the ghosts work currently? the problem is that they do not respawn, not always. The ghosts should by default move towards the respawn box after they are eaten by the player. Once in the box they should be normal again and continue chasing the player."
+
+**Commits:**
+
+- `[Paste Commit Hash Here]` - fix: Overhaul ghost EATEN→respawn lifecycle for reliable spawn box return
+
+**Explanation of changes:**
+Three interconnected bugs prevented eaten ghosts from reliably respawning:
+
+1. **Spawn box cells blocked normal pathfinding:** The maze generator marks the spawn area with grid value `2`. All pathfinding modules (`wanderer.py`, `interceptor.py`) and the ghost's own movement validation treated only `0` as passable. So when an eaten ghost arrived at the spawn box and transitioned to SCATTER/CHASE, it immediately tried to path out using normal A*—but the `2`-cells were considered walls, trapping it permanently inside the box.
+
+2. **Arrival check was timing-dependent:** The "have I reached spawn?" check (`my_pos == spawn`) was gated behind the repath cooldown timer (`_repath_cd`). This meant the ghost could physically sit on its spawn tile but wouldn't register as "arrived" until the cooldown happened to expire—often missing the check entirely at high eaten-speeds.
+
+3. **No continuous arrival detection during movement:** Movement happens pixel-by-pixel in `_follow_path()`, but the spawn arrival check was only in `update()`, outside the movement loop.
+
+Fixed by: (a) adding a `_is_passable()` helper to `enemy.py` that treats grid values `0` and `2` as walkable, and updating all grid checks in `_follow_path()` to use it; (b) updating `wanderer.py` and `interceptor.py` to use `!= 1` instead of `== 0`; (c) moving the spawn arrival check directly into `_follow_path()` so it fires every frame the ghost is tile-aligned; (d) immediately resetting the path, cooldown, speed, and accumulator on arrival so the ghost starts normal behaviour without delay.
+
+---
+
 ### Prompt 17
 
 **The prompt:**
