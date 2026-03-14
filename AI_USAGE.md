@@ -82,3 +82,53 @@ Filled in the correct details for Prompt 1 and added the documentation section f
 
 **Explanation of changes:**
 Created the `.agents/skills/document_ai_usage/SKILL.md` file to formalize the project's AI tracking rules as an agent "skill". This automatically instructs all future AI agents operating in this workspace on how to correctly document their usage in `AI_USAGE.md`.
+
+---
+
+### Prompt [5]
+
+**The prompt:**
+
+> You are an expert game developer and computer science algorithm specialist. Your task is to build a top-down, grid-based "Pac-Man" style game. 
+
+CRITICAL EVALUATION CRITERIA: 
+The final solution will be heavily judged on code structure, readability, adherence to clean code principles (SOLID, DRY), and the elegance of the algorithms used. Use a widely accessible technology stack (e.g., Python with Pygame, or HTML5 Canvas with JavaScript).
+
+Please execute this project strictly in the following phases. Do not move to the next phase until the current one is fully functional.
+
+### Phase 1: Maze Generation and Rendering (BONUS TARGETED)
+- Do not use a hardcoded map. Implement a procedural maze generation algorithm (e.g., Randomized Depth-First Search, Prim's algorithm, or Recursive Backtracker) to generate a random solvable maze every time the game starts.
+- Render the maze clearly on the screen. Ensure there are open paths and clear boundaries.
+
+### Phase 2: Player Character and Mechanics
+- Render a controllable player character on the screen.
+- Implement smooth, grid-based movement controlled by the keyboard (Arrow keys or WASD).
+- Implement strict collision detection. The player must absolutely not be able to pass through or clip into maze walls.
+
+### Phase 3: Enemy AI and Pathfinding (BONUS TARGETED)
+- Add multiple enemies (ghosts) that start at specific locations and navigate towards the player.
+- CRITICAL BONUS REQUIREMENT: Implement a unique path-finding algorithm for each enemy to give them distinct behaviors. For example:
+  - Enemy 1 (The Chaser): Uses A* (A-star) algorithm to find the absolute shortest path to the player.
+  - Enemy 2 (The Tracker): Uses Breadth-First Search (BFS) or Dijkstra's algorithm.
+  - Enemy 3 (The Interceptor): Uses a heuristic to target the tile a few steps *ahead* of the player's current direction.
+  - Enemy 4 (The Wanderer): Uses a Random Walk algorithm or a Wall-Follower logic until it gets within a certain radius of the player.
+
+### Phase 4: Game Elements
+- Distribute collectible items (points/dots) throughout the generated maze paths.
+- Implement a scoring system that updates as the player collects items.
+- Add at least one type of moving obstacle and one "Power-Up" (e.g., temporary invincibility, speed boost, or the ability to eat enemies).
+
+### Phase 5: Code Polish and Documentation
+- Refactor the code to ensure it is highly modular (e.g., separate files or classes for Game Engine, Player, MazeGenerator, and Pathfinding algorithms).
+- Add clear, descriptive comments explaining the logic behind the maze generation and pathfinding algorithms.
+
+MAKE THIS WHOLE THING INTO A HUGE IMPLEMENTATION PLAN MD FILE SO THAT EVERYONE CAN FOLLOW!"
+
+**Commits:**
+
+- `30ad8f86fa34756f06653b5017afd5d98b901d0a` - Added a comprehensive implementation plan of the exercise.
+
+**Explanation of changes:**
+Added a comprehensive implementation plan of the exercise.
+
+---

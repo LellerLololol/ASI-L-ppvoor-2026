@@ -28,4 +28,4 @@ while True:
 
 
   pygame.display.flip()
-  fpsClock.tick(fps)a
+  fpsClock.tick(fps)
