@@ -9,6 +9,7 @@ WIN       – player collected every dot
 """
 
 import sys
+import os
 import pygame
 
 from game.settings import (
@@ -39,9 +40,17 @@ class Game:
 
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(WINDOW_TITLE)
         self.clock = pygame.time.Clock()
+
+        # Audio setup
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.bgm_normal = os.path.join(base_dir, "assets", "bgm_normal.wav")
+        self.bgm_fast = os.path.join(base_dir, "assets", "bgm_fast.wav")
+        self.is_fast_bgm = False
+        self.music_pos_at_switch = 0.0
 
         self._setup_new_game()
 
@@ -99,6 +108,12 @@ class Game:
 
         # ---- Moving obstacle ----
         self.obstacle = self._create_obstacle()
+
+        # ---- Audio ----
+        pygame.mixer.music.load(self.bgm_normal)
+        pygame.mixer.music.play(-1)
+        self.is_fast_bgm = False
+        self.music_pos_at_switch = 0.0
 
     # ------------------------------------------------------------------
     # Main loop
@@ -162,6 +177,14 @@ class Game:
             self.speed_boost_timer -= 1
             if self.speed_boost_timer == 0:
                 self.player.speed = PLAYER_SPEED
+                if self.is_fast_bgm:
+                    # Switch back to normal speed music
+                    current_pos_sec = self.music_pos_at_switch + (pygame.mixer.music.get_pos() / 1000.0)
+                    new_pos = (current_pos_sec * 1.5) % 30.69 # Approx length of normal
+                    pygame.mixer.music.load(self.bgm_normal)
+                    pygame.mixer.music.play(-1, start=new_pos)
+                    self.is_fast_bgm = False
+                    self.music_pos_at_switch = new_pos
 
         # -- Speed boost spawning --
         self.speed_boost_spawn_cd -= 1
@@ -211,11 +234,21 @@ class Game:
             if player_rect.colliderect(get_item_rect(boost.grid_pos)):
                 self.speed_boosts.remove(boost)
                 self.speed_boost_timer = SPEED_BOOST_DURATION
-                self.player.speed = int(PLAYER_SPEED * SPEED_BOOST_MULTIPLIER)
+                self.player.speed = PLAYER_SPEED * SPEED_BOOST_MULTIPLIER
+
+                if not self.is_fast_bgm:
+                    # Switch to fast music
+                    current_pos_sec = self.music_pos_at_switch + (pygame.mixer.music.get_pos() / 1000.0)
+                    new_pos = (current_pos_sec / 1.5) % 20.46 # Approx length of fast
+                    pygame.mixer.music.load(self.bgm_fast)
+                    pygame.mixer.music.play(-1, start=new_pos)
+                    self.is_fast_bgm = True
+                    self.music_pos_at_switch = new_pos
 
         # -- Win check --
         if not self.dots and not self.power_pellets:
             self.state = STATE_WIN
+            pygame.mixer.music.stop()
             return
 
         # -- Enemies --
@@ -378,6 +411,7 @@ class Game:
         self.lives -= 1
         if self.lives <= 0:
             self.state = STATE_GAME_OVER
+            pygame.mixer.music.stop()
         else:
             # Reset positions
             spawn_col, spawn_row = self.maze_gen.get_player_spawn()
