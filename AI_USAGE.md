@@ -342,3 +342,22 @@ The user correctly identified an architectural discrepancy: `Enemy` entities wer
 This was resolved by rewriting `Player._can_move_dist()` in `player.py` to calculate exactly which grid columns and rows the player's bounding box overlaps, and checking those explicit indices in the `grid` array instead of rectangles.
 
 Because both the player and the enemies now securely rely entirely on the grid array for movement bounding, the `_build_wall_rects()` method and the `self.wall_rects` variable were completely stripped out of `game/engine.py` and removed from the `Enemy` method signatures, saving memory and eliminating redundant coordinate conversions.
+
+---
+
+### Prompt 16
+
+**The prompt:**
+
+> "the player passed through the ghost even though now they are on the same system"
+
+**Commits:**
+
+- `[Paste Commit Hash Here]` - fix: Restore player death collision when ghosts are in the SCATTER state
+
+**Explanation of changes:**
+The user's reported bug was not actually a collision coordinate issue, but rather a state machine oversight. In Prompt 9, a new `"SCATTER"` mode was added to the game, alternating with `"CHASE"`.
+
+However, the ghost collision logic in `game/engine.py` explicitly checked `elif enemy.state == "CHASE":` to trigger a player death. If the player happened to run into a ghost during the 7-second `"SCATTER"` window, the collision was detected but ignored by the game engine, allowing the player to pass cleanly through unharmed.
+
+This was resolved by updating the game loop to check `elif enemy.state in ("CHASE", "SCATTER"):`, restoring lethality to the ghosts during their retreat phase.
