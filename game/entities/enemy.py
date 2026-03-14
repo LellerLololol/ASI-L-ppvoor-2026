@@ -17,12 +17,19 @@ import pygame
 from game.settings import (
     CELL_SIZE, ENEMY_SPEED, ENEMY_FRIGHTENED_SPEED, ENEMY_EATEN_SPEED,
     COLOR_FRIGHTENED, COLOR_EYES,
+    SCATTER_DURATION, CHASE_DURATION, ENEMY_REPATH_INTERVAL,
+    MAZE_COLS, MAZE_ROWS,
 )
 from game.pathfinding import astar, bfs, interceptor, wanderer
 
 
-# Refresh pathfinding every N frames (avoids recalculating every tick)
-_REPATH_INTERVAL = 10
+# Scatter target corners (col, row) — one per ghost
+_SCATTER_CORNERS = [
+    (MAZE_COLS - 2, 1),          # top-right   (Blinky)
+    (1, 1),                      # top-left    (Pinky)
+    (MAZE_COLS - 2, MAZE_ROWS - 2),  # bottom-right (Inky)
+    (1, MAZE_ROWS - 2),          # bottom-left (Clyde)
+]
 
 # 4-directional movement
 _DIRECTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]
@@ -58,16 +65,20 @@ class Enemy:
 
         self.spawn_x = x
         self.spawn_y = y
-        self.pixel_x: float = x * tile_size
-        self.pixel_y: float = y * tile_size
+        self.pixel_x: int = int(x * tile_size)
+        self.pixel_y: int = int(y * tile_size)
+        self.movement_accum: float = 0.0
         self.direction: tuple[int, int] = (0, 0)
 
-        # States: "CHASE", "FRIGHTENED", "EATEN"
-        self.state: str = "CHASE"
+        # States: "CHASE", "SCATTER", "FRIGHTENED", "EATEN"
+        self.state: str = "SCATTER"
 
         self._path: list[tuple[int, int]] = []
         self._path_index: int = 0
         self._repath_cd: int = 0
+
+        # Scatter/chase cycle timer (shared via class var, set by engine)
+        self.scatter_target: tuple[int, int] = (1, 1)  # set per ghost
 
     # ------------------------------------------------------------------
     # Public API
@@ -91,7 +102,7 @@ class Enemy:
         # Only recalculate path periodically
         self._repath_cd -= 1
         if self._repath_cd <= 0 and self._is_tile_aligned():
-            self._repath_cd = _REPATH_INTERVAL
+            self._repath_cd = ENEMY_REPATH_INTERVAL
             my_pos = self.get_grid_pos()
 
             if self.state == "EATEN":
@@ -99,15 +110,18 @@ class Enemy:
                 spawn = (self.spawn_x, self.spawn_y)
                 self._path = astar.find_path(grid, my_pos, spawn)
                 if my_pos == spawn:
-                    self.state = "CHASE"
+                    self.state = "SCATTER"
                     self._path = []
             elif self.state == "FRIGHTENED":
                 # Run away: pick a random direction
                 self._path = []
                 d = wanderer.get_random_direction(grid, my_pos, self.direction)
                 self.direction = d
+            elif self.state == "SCATTER":
+                # Retreat to assigned corner
+                self._path = astar.find_path(grid, my_pos, self._nearest_valid(grid, self.scatter_target))
             else:
-                # Subclass-specific targeting
+                # CHASE — subclass-specific targeting
                 self._path = self._choose_target(grid, player, all_enemies)
 
             self._path_index = 1  # skip index 0 (current pos)
@@ -176,6 +190,21 @@ class Enemy:
             int(self.pixel_y // self.tile_size),
         )
 
+    def _nearest_valid(self, grid: list[list[int]], target: tuple[int, int]) -> tuple[int, int]:
+        """Find the nearest passable cell to *target* (in case it's a wall)."""
+        rows = len(grid)
+        cols = len(grid[0]) if rows else 0
+        tc, tr = target
+        if 0 <= tr < rows and 0 <= tc < cols and grid[tr][tc] == 0:
+            return target
+        for radius in range(1, max(rows, cols)):
+            for dr in range(-radius, radius + 1):
+                for dc in range(-radius, radius + 1):
+                    r, c = tr + dr, tc + dc
+                    if 0 <= r < rows and 0 <= c < cols and grid[r][c] == 0:
+                        return (c, r)
+        return target
+
     def _is_tile_aligned(self) -> bool:
         return (
             self.pixel_x % self.tile_size == 0
@@ -183,40 +212,62 @@ class Enemy:
         )
 
     def _follow_path(self, grid: list[list[int]]) -> None:
-        """Move towards the next waypoint in the current path."""
-        if not self._path or self._path_index >= len(self._path):
-            # No path — keep moving in current direction if possible
-            if self.direction != (0, 0):
+        """Move towards the next waypoint, with strict wall collision.
+
+        Movement is processed pixel-by-pixel using a fractional accumulator.
+        This guarantees ghosts always hit exact tile alignments regardless
+        of their current speed multiplier.
+        """
+        rows = len(grid)
+        cols = len(grid[0]) if rows else 0
+
+        self.movement_accum += self.speed
+        pixels_to_move = int(self.movement_accum)
+        self.movement_accum -= pixels_to_move
+
+        for _ in range(pixels_to_move):
+            if self._is_tile_aligned():
                 cx, cy = self.get_grid_pos()
-                nx, ny = cx + self.direction[0], cy + self.direction[1]
-                rows, cols = len(grid), len(grid[0])
-                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
-                    self.pixel_x += self.direction[0] * self.speed
-                    self.pixel_y += self.direction[1] * self.speed
+
+                # Determine next desired direction
+                next_dir = self.direction
+
+                if self._path and self._path_index < len(self._path):
+                    # Follow the path
+                    target = self._path[self._path_index]
+                    dx = target[0] - cx
+                    dy = target[1] - cy
+
+                    # Clamp to unit direction
+                    if dx != 0:
+                        dx = 1 if dx > 0 else -1
+                    if dy != 0:
+                        dy = 1 if dy > 0 else -1
+
+                    next_dir = (dx, dy)
+                    self._path_index += 1
+                elif self.direction == (0, 0):
+                    # Stopped with no path — pick a random direction
+                    next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
                 else:
-                    # Pick a new random direction when hitting a wall
-                    d = wanderer.get_random_direction(grid, (cx, cy), self.direction)
-                    self.direction = d
-            return
+                    # No path, already moving — check if we can keep going
+                    nx, ny = cx + self.direction[0], cy + self.direction[1]
+                    if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
+                        # Blocked — pick a new random valid direction
+                        next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
 
-        # Move towards the next waypoint
-        if self._is_tile_aligned():
-            target = self._path[self._path_index]
-            my_pos = self.get_grid_pos()
-            dx = target[0] - my_pos[0]
-            dy = target[1] - my_pos[1]
+                # Validate the chosen direction against the grid
+                nx, ny = cx + next_dir[0], cy + next_dir[1]
+                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
+                    self.direction = next_dir
+                else:
+                    # Even the chosen direction is blocked — stop
+                    self.direction = (0, 0)
 
-            # Clamp to unit direction
-            if dx != 0:
-                dx = dx // abs(dx)
-            if dy != 0:
-                dy = dy // abs(dy)
-
-            self.direction = (dx, dy)
-            self._path_index += 1
-
-        self.pixel_x += self.direction[0] * self.speed
-        self.pixel_y += self.direction[1] * self.speed
+            # Move exactly 1 pixel if we have a valid direction
+            if self.direction != (0, 0):
+                self.pixel_x += self.direction[0]
+                self.pixel_y += self.direction[1]
 
     def _draw_eyes(self, surface: pygame.Surface, cx: int, cy: int, radius: int) -> None:
         """Draw ghost eyes with pupils looking in movement direction."""
@@ -240,6 +291,9 @@ class Enemy:
 
 class Blinky(Enemy):
     """The Chaser — uses A* to find the shortest path directly to the player."""
+    def __init__(self, x, y, tile_size, speed, color):
+        super().__init__(x, y, tile_size, speed, color)
+        self.scatter_target = _SCATTER_CORNERS[0]
 
     def _choose_target(self, grid, player, all_enemies):
         return astar.find_path(grid, self.get_grid_pos(), player.get_grid_pos())
@@ -247,6 +301,9 @@ class Blinky(Enemy):
 
 class Pinky(Enemy):
     """The Interceptor — targets the cell 4 tiles ahead of the player."""
+    def __init__(self, x, y, tile_size, speed, color):
+        super().__init__(x, y, tile_size, speed, color)
+        self.scatter_target = _SCATTER_CORNERS[1]
 
     def _choose_target(self, grid, player, all_enemies):
         return interceptor.find_intercept_path(
@@ -259,6 +316,9 @@ class Pinky(Enemy):
 
 class Inky(Enemy):
     """The Tracker — uses BFS to flood-fill towards the player."""
+    def __init__(self, x, y, tile_size, speed, color):
+        super().__init__(x, y, tile_size, speed, color)
+        self.scatter_target = _SCATTER_CORNERS[2]
 
     def _choose_target(self, grid, player, all_enemies):
         return bfs.find_path(grid, self.get_grid_pos(), player.get_grid_pos())
@@ -266,6 +326,9 @@ class Inky(Enemy):
 
 class Clyde(Enemy):
     """The Wanderer — random walk until within 8 tiles, then switches to A*."""
+    def __init__(self, x, y, tile_size, speed, color):
+        super().__init__(x, y, tile_size, speed, color)
+        self.scatter_target = _SCATTER_CORNERS[3]
 
     def _choose_target(self, grid, player, all_enemies):
         result = wanderer.get_wanderer_action(

@@ -171,3 +171,104 @@ Implemented all 5 phases of the Pac-Man game:
 - **Phase 3**: Created four pathfinding algorithms — `game/pathfinding/astar.py` (A* with Manhattan heuristic), `game/pathfinding/bfs.py` (BFS), `game/pathfinding/interceptor.py` (predictive targeting 4 tiles ahead), `game/pathfinding/wanderer.py` (random walk + proximity A* chase). Created `game/entities/enemy.py` with base `Enemy` class and four subclasses: Blinky (A\*), Pinky (interceptor), Inky (BFS), Clyde (wanderer).
 - **Phase 4**: Created `game/items/collectibles.py` with Dot, PowerPellet (pulsing glow), SpeedBoost (lightning bolt), and MovingObstacle (rotating spiky hazard). Scoring, lives, power-up timers, and win/lose conditions all wired into engine.
 - **Phase 5**: Updated `main.py` to thin entry point, updated `README.md`, created `requirements.txt`.
+
+---
+
+### Prompt 7
+
+**The prompt:**
+
+> sometimes the player gets stuck in the wall and cant move. especially when picking up the wierd green thing. so if the player is in 1x1 corridor so there is a well next him on either side, if the player then moves into the wall then it gets stuck
+
+**Commits:**
+
+- `d31761f06bd23ef9a7a9acf4053263f1ee5c4574` - fix: Implement robust pixel-by-pixel movement with strict grid-math collision to prevent getting stuck
+
+**Explanation of changes:**
+Fixed two critical movement bugs in `player.py`. First, the speed boost item multiplied player speed by 1.5 (making it 3). Because 3 doesn't divide the grid cell size (32) evenly, the player skipped past exact grid alignments and got permanently stuck. This was fixed by implementing pixel-by-pixel movement under the hood. Second, the player could still get stuck in 1x1 tight corridors because the Pygame Rect collision allowed sinking 1 pixel into flush walls to avoid scraping, breaking the mathematical grid alignment required to turn. This was fixed by entirely replacing Pygame Rect collisions with strict mathematical grid-index overlapping checks, guaranteeing the player can never intersect a wall tile and will always arrive at intersections perfectly aligned.
+
+> [The game crashed with `pygame.error: File is not a Windows BMP file` when loading the PNG sprite. User asked to reinstall the pygame build.]
+
+**Commits:**
+
+- No commits made
+
+**Explanation of changes:**
+The standard `pygame` package installed without SDL_image extended support on Python 3.14, so it could only load BMP files. Uninstalled `pygame` and installed `pygame-ce` (Pygame Community Edition), which includes full SDL_image support. Updated `requirements.txt` to reference `pygame-ce>=2.5.0`.
+
+---
+
+### Prompt 8
+
+**The prompt:**
+
+> "There is a problem with the ghosts clipping and running through the wall and sometimes even just exiting the map. This should not happen. The ghosts should be confined to the map borders and the places that the player can move to."
+
+**Commits:**
+
+- `9b19d87f9af64f03283af7622aa6cfdc3ce1ff31` - fix: Prevent ghost wall-clipping and switch to pygame-ce
+
+**Explanation of changes:**
+Fixed two root causes of ghost wall-clipping:
+
+1. `ENEMY_SPEED` was 3 which doesn't divide `CELL_SIZE` (32) evenly, so ghosts were never detected as tile-aligned and could never check walls. Changed to 4 (and `EATEN_SPEED` from 6→8).
+2. Rewrote `_follow_path()` in `game/entities/enemy.py` to validate every cell transition against the grid before moving, and to snap pixel position to exact grid coordinates to prevent cumulative drift. Verified with automated test: 0 wall violations across 2000 frames.
+
+---
+
+### Prompt 9
+
+**The prompt:**
+
+> "New problem, now the path finding algortihm works correctly and it is TOO GOOD: the ghosts just straigh beeline to the player with no counterplay possible."
+
+**Commits:**
+
+- `84fe1e24e07afee59cda185acdfc2ec747f5213e` - feat: Implement classic Pac-Man Scatter/Chase cycle and AI balancing
+
+**Explanation of changes:**
+To balance the perfect pathfinding, implemented the classic Pac-Man "Scatter vs Chase" alternating modes:
+
+1. `game/settings.py`: Added constants `SCATTER_DURATION` (~7s) and `CHASE_DURATION` (~20s). Reduced base `ENEMY_SPEED` from 4 to 2 (Player speed is 4) so the player can actually outrun them on straightaways.
+2. `game/entities/enemy.py`: Assigned individual corner targets to each ghost type (Blinky=Top-Right, Pinky=Top-Left, Inky=Bottom-Right, Clyde=Bottom-Left).
+3. `game/engine.py`: Wired a `mode_timer` into the game loop. Every ~20 seconds, ghosts universally stop chasing and fall back/scatter towards their respective corners for ~7s. As in the classic arcade game, changing modes immediately reverses ghost direction, creating a rhythmic window of opportunity for the player to counter-attack or escape.
+
+---
+
+### Prompt 10
+
+**The prompt:**
+
+> "I did a pull and and it broke the ghost movement again."
+
+**Commits:**
+
+- `0cd45ed17964ff1c719067a769a570d2ace62877` - fix: Guarantee strict ghost grid alignment across fractional speeds via float accumulator
+
+**Explanation of changes:**
+The team updated ghost speeds to fractional values (`ENEMY_SPEED = 1.6`) in `settings.py`. The previous ghost movement logic relied on integers that cleanly divided into `CELL_SIZE` (`32`) to achieve perfect tile alignments (`pixel_x % 32 == 0`). Fractional speeds broke this, preventing ghosts from ever snapping to intersections to check walls.
+
+Fixed by bringing the ghosts strictly to the same pixel-by-pixel robust movement standard implemented by the team for the player in the previous prompt, but enhanced for fractions. In `game/entities/enemy.py`, ghost pixel coordinates were cast to strictly `int`. A `movement_accum` float was added to `Enemy.__init__`. During `_follow_path()`, the ghost adds its speed (`1.6`) to the accumulator every frame, then peels off the integer part (`1` or `2`) and moves exactly that many discrete pixels inside a loop. This entirely eliminates fractional position drift and guarantees that ghosts will perfectly hit `X % 32 == 0` intersections to execute their pathfinding and wall collision logic, no matter what complex math multiplier or floating point speed is configured.
+
+---
+
+### Prompt 11
+
+**The prompt:**
+
+> "Make all speeds faster like 1.5x"
+
+**Commits:**
+
+- `ca8307c2b96381e15abc4bf42e18ac6bc38c7158` - feat: Increase all game speeds by 1.5x and add float accumulator to player
+
+**Explanation of changes:**
+Multiplied all movement speed constants in `game/settings.py` by 1.5:
+
+- `PLAYER_SPEED` from 2 to 3
+- `ENEMY_SPEED` from 1.6 to 2.4
+- `ENEMY_FRIGHTENED_SPEED` from 1 to 1.5
+- `ENEMY_EATEN_SPEED` from 6 to 9
+- `OBSTACLE_SPEED` from 2 to 3
+
+Additionally, proactively updated `player.py`'s movement logic to use a `movement_accum` float accumulator just like the ghosts do. The previous logic cast `self.speed` directly to an `int()`. Since the player base speed is now `3`, grabbing a 1.5x speed boost changes their speed to `4.5`. The old logic would have truncated this to exactly `4`, stripping away the `.5` advantage entirely and nerfing the powerup. The float accumulator allows the player to correctly bank and consume those fractions to effectively move at perfectly `4.5` pixels per frame.
