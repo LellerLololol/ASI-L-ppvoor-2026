@@ -387,3 +387,20 @@ Implemented the two requested features to bring the game closer to classic Pac-M
    - Set the initial `self.state` in `_setup_new_game` (and after player deaths) to this new state, accompanied by a `start_delay_timer` initialized to 3 times the frames-per-second (`FPS * 3`).
    - The engine's main `run()` loop was updated to tick this timer down and only transition to `STATE_PLAYING` once it hits zero.
    - Designed a new `draw_start_delay` method in `game/maze/renderer.py` that renders a bold yellow "GET READY!" string and the current countdown integer on top of the map.
+
+---
+
+### Prompt [18]
+
+**The prompt:**
+
+> CREATE AN agent skills system that completely defines every single part of the current repository. Then proceed to give me a handoff prompt.
+
+**Commits:**
+
+- `6f36b6a1c616f5b08ed82fd91dab882d16dff50b` - I've created five detailed .md skill files in .agents/skills/
+
+**Explanation of changes:**
+I've created five detailed .md skill files in .agents/skills/
+
+---
