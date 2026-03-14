@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import sys
  
 import pygame
@@ -29,3 +30,5 @@ while True:
 
   pygame.display.flip()
   fpsClock.tick(fps)
+=======
+>>>>>>> c73c96d583a7f0f8a738d4115fefea958c48ef44
