@@ -402,5 +402,3 @@ Implemented the two requested features to bring the game closer to classic Pac-M
 
 **Explanation of changes:**
 I've created five detailed .md skill files in .agents/skills/
-
----
