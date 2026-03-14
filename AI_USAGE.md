@@ -283,11 +283,7 @@ Additionally, proactively updated `player.py`'s movement logic to use a `movemen
 
 **Commits:**
 
-<<<<<<< HEAD
 - `29b4e3d2b53cdb688c548fff5b26e1951b1f94e2` - fix: Convert grid-coordinate collisions to edge-based rectangular hitboxes
-=======
-- `[Paste Commit Hash Here]` - fix: Convert grid-coordinate collisions to edge-based rectangular hitboxes
->>>>>>> 29b4e3d2b53cdb688c548fff5b26e1951b1f94e2
 
 **Explanation of changes:**
 The original collision logic in `game/engine.py` strictly relied on comparing mathematical grid indices (e.g., `if dot.grid_pos == player_grid`), meaning collisions only registered when the dead-center of the player perfectly overlapped the dead-center of the item or enemy tile.
