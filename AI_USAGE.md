@@ -93,7 +93,85 @@ Created the `.agents/skills/document_ai_usage/SKILL.md` file to formalize the pr
 
 **Commits:**
 
+<<<<<<< HEAD
 - `7df8635f27345b2361035a9ddb3ca4057f8e3230` - feat: Add Player class with grid-aligned movement and visual effects
+=======
+- `22323e2` - feat: Add Player class with grid-aligned movement and visual effects
+>>>>>>> 683d2332160f8bfba508c4159c7022280d49da14
 
 **Explanation of changes:**
 Created `player.py` containing the `Player` class (extends `pygame.sprite.Sprite`) responsible for the Pac-Man character and movement system. The class loads and scales the user's 16×16 pixel art sprite, pre-computes directional variants (flip/rotate) so the character faces its movement direction, and implements grid-aligned movement with wall collision detection. Visual effects include configurable squash & stretch animation, directional eye pupil overlay aligned with the sprite's existing eyes, and a fading particle trail. All parameters (speed, squash amount, eye offset, trail lifetime, colors, pupil size/shift) are passed via the constructor — nothing is hardcoded. Input supports both arrow keys and WASD.
+
+---
+
+### Prompt [5]
+
+**The prompt:**
+
+> You are an expert game developer and computer science algorithm specialist. Your task is to build a top-down, grid-based "Pac-Man" style game.
+
+CRITICAL EVALUATION CRITERIA:
+The final solution will be heavily judged on code structure, readability, adherence to clean code principles (SOLID, DRY), and the elegance of the algorithms used. Use a widely accessible technology stack (e.g., Python with Pygame, or HTML5 Canvas with JavaScript).
+
+Please execute this project strictly in the following phases. Do not move to the next phase until the current one is fully functional.
+
+### Phase 1: Maze Generation and Rendering (BONUS TARGETED)
+
+- Do not use a hardcoded map. Implement a procedural maze generation algorithm (e.g., Randomized Depth-First Search, Prim's algorithm, or Recursive Backtracker) to generate a random solvable maze every time the game starts.
+- Render the maze clearly on the screen. Ensure there are open paths and clear boundaries.
+
+### Phase 2: Player Character and Mechanics
+
+- Render a controllable player character on the screen.
+- Implement smooth, grid-based movement controlled by the keyboard (Arrow keys or WASD).
+- Implement strict collision detection. The player must absolutely not be able to pass through or clip into maze walls.
+
+### Phase 3: Enemy AI and Pathfinding (BONUS TARGETED)
+
+- Add multiple enemies (ghosts) that start at specific locations and navigate towards the player.
+- CRITICAL BONUS REQUIREMENT: Implement a unique path-finding algorithm for each enemy to give them distinct behaviors. For example:
+  - Enemy 1 (The Chaser): Uses A\* (A-star) algorithm to find the absolute shortest path to the player.
+  - Enemy 2 (The Tracker): Uses Breadth-First Search (BFS) or Dijkstra's algorithm.
+  - Enemy 3 (The Interceptor): Uses a heuristic to target the tile a few steps _ahead_ of the player's current direction.
+  - Enemy 4 (The Wanderer): Uses a Random Walk algorithm or a Wall-Follower logic until it gets within a certain radius of the player.
+
+### Phase 4: Game Elements
+
+- Distribute collectible items (points/dots) throughout the generated maze paths.
+- Implement a scoring system that updates as the player collects items.
+- Add at least one type of moving obstacle and one "Power-Up" (e.g., temporary invincibility, speed boost, or the ability to eat enemies).
+
+### Phase 5: Code Polish and Documentation
+
+- Refactor the code to ensure it is highly modular (e.g., separate files or classes for Game Engine, Player, MazeGenerator, and Pathfinding algorithms).
+- Add clear, descriptive comments explaining the logic behind the maze generation and pathfinding algorithms.
+
+MAKE THIS WHOLE THING INTO A HUGE IMPLEMENTATION PLAN MD FILE SO THAT EVERYONE CAN FOLLOW!"
+
+**Commits:**
+
+- `30ad8f86fa34756f06653b5017afd5d98b901d0a` - Added a comprehensive implementation plan of the exercise.
+
+**Explanation of changes:**
+Added a comprehensive implementation plan of the exercise.
+
+---
+
+### Prompt 6
+
+**The prompt:**
+
+> Good implementation plan! I did a pull that synced some rudimentary solutions my team already did! Complete the whole implementation plan while building upon the stack that exists.
+
+**Commits:**
+
+- `31d498744e36c4954f5b2ad520b443c1f379edf6` - feat: Implement full Pac-Man game (maze gen, AI, items, engine)
+
+**Explanation of changes:**
+Implemented all 5 phases of the Pac-Man game:
+
+- **Phase 1**: Created `game/settings.py` (all constants), `game/maze/generator.py` (Recursive Backtracker maze generation with spawn zones and extra corridor openings), `game/maze/renderer.py` (cached maze rendering, HUD, game over/win overlays), and `game/engine.py` (game loop with state machine).
+- **Phase 2**: Integrated existing `player.py` via `game/entities/player.py` re-export shim. Wired player into the engine with collision detection against maze walls.
+- **Phase 3**: Created four pathfinding algorithms — `game/pathfinding/astar.py` (A* with Manhattan heuristic), `game/pathfinding/bfs.py` (BFS), `game/pathfinding/interceptor.py` (predictive targeting 4 tiles ahead), `game/pathfinding/wanderer.py` (random walk + proximity A* chase). Created `game/entities/enemy.py` with base `Enemy` class and four subclasses: Blinky (A\*), Pinky (interceptor), Inky (BFS), Clyde (wanderer).
+- **Phase 4**: Created `game/items/collectibles.py` with Dot, PowerPellet (pulsing glow), SpeedBoost (lightning bolt), and MovingObstacle (rotating spiky hazard). Scoring, lives, power-up timers, and win/lose conditions all wired into engine.
+- **Phase 5**: Updated `main.py` to thin entry point, updated `README.md`, created `requirements.txt`.

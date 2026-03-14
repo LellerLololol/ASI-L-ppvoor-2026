@@ -1,0 +1,1 @@
+"""Collectible items subpackage."""

@@ -1,31 +1,17 @@
-import sys
- 
-import pygame
-from pygame.locals import *
- 
-pygame.init()
- 
-fps = 60
-fpsClock = pygame.time.Clock()
- 
-width, height = 640, 920
-screen = pygame.display.set_mode((width, height))
+"""
+main.py - Entry point for the Pac-Man game.
 
-# Game loop.
-while True:
-  screen.fill((0, 0, 0))
-  
-  for event in pygame.event.get():
-    if event.type == QUIT:
-      pygame.quit()
-      sys.exit()
-  
-  # Update.
-  
-  # Draw.
-  points = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
-  pygame.draw.polygon(screen, (0, 255, 0), points, width=0)
+Run this file to start the game:
+    python main.py
+"""
+
+from game.engine import Game
 
 
-  pygame.display.flip()
-  fpsClock.tick(fps)a
+def main():
+    game = Game()
+    game.run()
+
+
+if __name__ == "__main__":
+    main()
