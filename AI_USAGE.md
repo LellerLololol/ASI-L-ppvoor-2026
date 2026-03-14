@@ -294,7 +294,26 @@ This was resolved by replacing all grid coordinate checks with standard `pygame.
 
 **The prompt:**
 
+> "the spinning blade is moving through walls"
+
+**Commits:**
+
+- `0726bf107be5daee35d872652bb5305ffdba17a1` - fix: Apply float accumulator pixel-by-pixel movement to MovingObstacle to stop wall clipping
+
+**Explanation of changes:**
+The user's previous modification to increase speeds by 1.5x set `OBSTACLE_SPEED = 3`. The `MovingObstacle` class in `game/items/collectibles.py` still relied on the old logic (`pixel_x % 32 == 0`) to detect map intersections and turn away from walls. Because a speed of 3 doesn't divide 32 evenly, the obstacle skipped right past the alignment check and clipped directly through the walls.
+
+Fixed by refactoring `MovingObstacle.update()` to use the exact same float accumulator and pixel-by-pixel movement loop that the Player and Ghosts were upgraded to use in earlier commits. The obstacle now builds up fractional speed in an accumulator, extracts the integer distance, and processes wall collisions and turns one pixel at a time. This guarantees that the obstacle always perfectly slides onto `X % 32 == 0` alignments, reliably detecting and bouncing off walls regardless of its speed.
+
 > "I added background music for the game in the assets folder. Also make it so that if the player gets the speed power up the background music also gets faster."
+
+---
+
+### Prompt 14
+
+**The prompt:**
+
+> "I added background music for the game in the assets folder. Also make it so that if the player gets the speed powerup the background music also gets faster."
 
 **Commits:**
 
@@ -306,3 +325,20 @@ The provided asset `assets/Hechizo_en_la_Pista.mp4` was a video file, which `pyg
 In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_normal.wav` was set to endlessly loop upon game start. Logic was added to the main update loop so that when the player picks up a speed boost (or when the boost timer runs out), the engine calculates the exact playback position (`pygame.mixer.music.get_pos()`) and dynamically swaps between the normal and fast tracks using `pygame.mixer.music.play(-1, start=new_pos)`, maintaining a seamless chronological sync between the audio and gameplay state.
 
 ---
+
+### Prompt 15
+
+**The prompt:**
+
+> "the movement checking for the ghosts and player are fundamentally different. use the grid system"
+
+**Commits:**
+
+- `73de0a627a98df2af0d61da5e0fd7b50fb53c381` - refactor: Unify Player and Ghost movement collision to exclusively use the 2D grid array
+
+**Explanation of changes:**
+The user correctly identified an architectural discrepancy: `Enemy` entities were verifying their movement directly against indices in the `grid` integer array (e.g., `grid[ny][nx] == 0`), while the `Player` was still relying on an expensive iteration over a list of `pygame.Rect` objects (`wall_rects`) to check for wall intersections.
+
+This was resolved by rewriting `Player._can_move_dist()` in `player.py` to calculate exactly which grid columns and rows the player's bounding box overlaps, and checking those explicit indices in the `grid` array instead of rectangles.
+
+Because both the player and the enemies now securely rely entirely on the grid array for movement bounding, the `_build_wall_rects()` method and the `self.wall_rects` variable were completely stripped out of `game/engine.py` and removed from the `Enemy` method signatures, saving memory and eliminating redundant coordinate conversions.

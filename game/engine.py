@@ -75,9 +75,6 @@ class Game:
         self.grid = self.maze_gen.generate()
         self.renderer = MazeRenderer()
 
-        # Build wall rects list (used by player / enemy collision)
-        self.wall_rects = self._build_wall_rects()
-
         # ---- Player ----
         spawn_col, spawn_row = self.maze_gen.get_player_spawn()
         self.player = Player(
@@ -193,7 +190,7 @@ class Game:
             self.speed_boost_spawn_cd = SPEED_BOOST_SPAWN_INTERVAL
 
         # -- Player --
-        self.player.update(self.wall_rects)
+        self.player.update(self.grid)
         
         # Player hitbox (shrunk slightly for fair collisions)
         margin = 6
@@ -253,7 +250,7 @@ class Game:
 
         # -- Enemies --
         for enemy in self.enemies:
-            enemy.update(self.grid, self.wall_rects, self.player, self.enemies)
+            enemy.update(self.grid, self.player, self.enemies)
 
             # Collision with player
             enemy_rect = pygame.Rect(
@@ -332,17 +329,6 @@ class Game:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
-    def _build_wall_rects(self) -> list[pygame.Rect]:
-        """Convert grid 1-cells into a list of pygame.Rect for collision."""
-        rects = []
-        for row in range(len(self.grid)):
-            for col in range(len(self.grid[row])):
-                if self.grid[row][col] == 1:
-                    rects.append(
-                        pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-                    )
-        return rects
-
     def _place_dots(self) -> None:
         """Put a dot on every open path cell (excluding spawn zones)."""
         player_spawn = self.maze_gen.get_player_spawn()

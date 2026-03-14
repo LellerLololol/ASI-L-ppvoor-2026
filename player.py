@@ -175,13 +175,13 @@ class Player(pygame.sprite.Sprite):
     # ------------------------------------------------------------------
     # Update
     # ------------------------------------------------------------------
-    def update(self, wall_rects: list[pygame.Rect]):
+    def update(self, grid: list[list[int]]):
         """Advance one frame: move, collide, spawn particles.
 
         Parameters
         ----------
-        wall_rects : list[pygame.Rect]
-            Rectangles representing impassable walls.
+        grid : list[list[int]]
+            The 2D integer array representing the maze grid.
         """
         self._frame_counter += 1
 
@@ -201,12 +201,12 @@ class Player(pygame.sprite.Sprite):
         for _ in range(pixels_to_move):
             # 1. Try to turn when exactly on a tile intersection
             if self._is_tile_aligned():
-                if self._can_move_dist(self.queued_direction, 1, wall_rects):
+                if self._can_move_dist(self.queued_direction, 1, grid):
                     self.direction = self.queued_direction
 
             # 2. Stop if hitting a wall, otherwise move 1 pixel
             if self.direction != DIR_NONE:
-                if not self._can_move_dist(self.direction, 1, wall_rects):
+                if not self._can_move_dist(self.direction, 1, grid):
                     # Only zero out direction perfectly on grid so we don't get stuck slightly off
                     if self._is_tile_aligned():
                         self.direction = DIR_NONE
@@ -255,9 +255,9 @@ class Player(pygame.sprite.Sprite):
         )
 
     def _can_move_dist(
-        self, direction: tuple, dist: int, wall_rects: list[pygame.Rect]
+        self, direction: tuple, dist: int, grid: list[list[int]]
     ) -> bool:
-        """Check whether moving *dist* pixels in *direction* hits a wall."""
+        """Check whether moving *dist* pixels in *direction* hits a wall in the grid."""
         future_x = self.pixel_x + direction[0] * dist
         future_y = self.pixel_y + direction[1] * dist
 
@@ -269,17 +269,18 @@ class Player(pygame.sprite.Sprite):
         top_row = future_y // self.tile_size
         bottom_row = (future_y + self.tile_size - 1) // self.tile_size
 
+        rows = len(grid)
+        cols = len(grid[0]) if rows else 0
+
         # Check if any of the overlapping grid cells contain a wall
         for r in range(top_row, bottom_row + 1):
             for c in range(left_col, right_col + 1):
-                # We identify walls by their grid position (derived from the rect)
-                wall_x = c * self.tile_size
-                wall_y = r * self.tile_size
-                # Since wall_rects are provided directly, we just check if 
-                # a wall exists at this exact grid coordinate.
-                for w in wall_rects:
-                    if w.x == wall_x and w.y == wall_y:
-                        return False
+                # Bounds check
+                if r < 0 or r >= rows or c < 0 or c >= cols:
+                    return False
+                # 1 represents a wall
+                if grid[r][c] == 1:
+                    return False
         return True
 
     # ------------------------------------------------------------------

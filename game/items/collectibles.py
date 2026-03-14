@@ -114,13 +114,14 @@ class MovingObstacle:
     def __init__(self, col: int, row: int, tile_size: int, speed: int):
         self.tile_size = tile_size
         self.speed = speed
-        self.pixel_x: float = col * tile_size
-        self.pixel_y: float = row * tile_size
+        self.pixel_x: int = col * tile_size
+        self.pixel_y: int = row * tile_size
         self.direction: tuple[int, int] = random.choice(
             [(0, -1), (0, 1), (-1, 0), (1, 0)]
         )
         self.color = (200, 50, 50)
         self._frame = 0
+        self.movement_accum: float = 0.0
 
     def get_grid_pos(self) -> tuple[int, int]:
         return (
@@ -128,31 +129,45 @@ class MovingObstacle:
             int(self.pixel_y // self.tile_size),
         )
 
+    def _is_tile_aligned(self) -> bool:
+        return (
+            self.pixel_x % self.tile_size == 0
+            and self.pixel_y % self.tile_size == 0
+        )
+
     def update(self, grid: list[list[int]]) -> None:
-        """Move forward; pick a new direction on wall collision."""
+        """Move forward; pick a new direction on wall collision, pixel-by-pixel."""
         self._frame += 1
         rows = len(grid)
         cols = len(grid[0]) if rows else 0
 
-        if self.pixel_x % self.tile_size == 0 and self.pixel_y % self.tile_size == 0:
-            cx, cy = self.get_grid_pos()
-            nx = cx + self.direction[0]
-            ny = cy + self.direction[1]
+        self.movement_accum += self.speed
+        pixels_to_move = int(self.movement_accum)
+        self.movement_accum -= pixels_to_move
 
-            if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
-                # Hit a wall — pick new direction
-                valid = []
-                for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
-                    nnx, nny = cx + dx, cy + dy
-                    if 0 <= nny < rows and 0 <= nnx < cols and grid[nny][nnx] == 0:
-                        valid.append((dx, dy))
-                if valid:
-                    self.direction = random.choice(valid)
-                else:
-                    self.direction = (0, 0)
+        for _ in range(pixels_to_move):
+            if self._is_tile_aligned():
+                cx, cy = self.get_grid_pos()
+                nx = cx + self.direction[0]
+                ny = cy + self.direction[1]
 
-        self.pixel_x += self.direction[0] * self.speed
-        self.pixel_y += self.direction[1] * self.speed
+                # Check if the current direction leads into a wall
+                if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
+                    # Hit a wall — pick new valid direction
+                    valid = []
+                    for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+                        nnx, nny = cx + dx, cy + dy
+                        if 0 <= nny < rows and 0 <= nnx < cols and grid[nny][nnx] == 0:
+                            valid.append((dx, dy))
+                    if valid:
+                        self.direction = random.choice(valid)
+                    else:
+                        self.direction = (0, 0)
+
+            # Move exactly 1 pixel
+            if self.direction != (0, 0):
+                self.pixel_x += self.direction[0]
+                self.pixel_y += self.direction[1]
 
     def draw(self, surface: pygame.Surface) -> None:
         cx = int(self.pixel_x) + self.tile_size // 2
