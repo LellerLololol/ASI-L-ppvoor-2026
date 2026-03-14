@@ -9,6 +9,7 @@ WIN       – player collected every dot
 """
 
 import sys
+import os
 import pygame
 
 from game.settings import (
@@ -39,9 +40,17 @@ class Game:
 
     def __init__(self):
         pygame.init()
+        pygame.mixer.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption(WINDOW_TITLE)
         self.clock = pygame.time.Clock()
+
+        # Audio setup
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.bgm_normal = os.path.join(base_dir, "assets", "bgm_normal.wav")
+        self.bgm_fast = os.path.join(base_dir, "assets", "bgm_fast.wav")
+        self.is_fast_bgm = False
+        self.music_pos_at_switch = 0.0
 
         self._setup_new_game()
 
@@ -99,6 +108,12 @@ class Game:
 
         # ---- Moving obstacle ----
         self.obstacle = self._create_obstacle()
+
+        # ---- Audio ----
+        pygame.mixer.music.load(self.bgm_normal)
+        pygame.mixer.music.play(-1)
+        self.is_fast_bgm = False
+        self.music_pos_at_switch = 0.0
 
     # ------------------------------------------------------------------
     # Main loop
@@ -162,6 +177,14 @@ class Game:
             self.speed_boost_timer -= 1
             if self.speed_boost_timer == 0:
                 self.player.speed = PLAYER_SPEED
+                if self.is_fast_bgm:
+                    # Switch back to normal speed music
+                    current_pos_sec = self.music_pos_at_switch + (pygame.mixer.music.get_pos() / 1000.0)
+                    new_pos = (current_pos_sec * 1.5) % 30.69 # Approx length of normal
+                    pygame.mixer.music.load(self.bgm_normal)
+                    pygame.mixer.music.play(-1, start=new_pos)
+                    self.is_fast_bgm = False
+                    self.music_pos_at_switch = new_pos
 
         # -- Speed boost spawning --
         self.speed_boost_spawn_cd -= 1
@@ -171,17 +194,33 @@ class Game:
 
         # -- Player --
         self.player.update(self.wall_rects)
-        player_grid = self.player.get_grid_pos()
+        
+        # Player hitbox (shrunk slightly for fair collisions)
+        margin = 6
+        player_rect = pygame.Rect(
+            self.player.pixel_x + margin,
+            self.player.pixel_y + margin,
+            CELL_SIZE - margin * 2,
+            CELL_SIZE - margin * 2
+        )
+
+        def get_item_rect(grid_pos):
+            return pygame.Rect(
+                grid_pos[0] * CELL_SIZE + margin,
+                grid_pos[1] * CELL_SIZE + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
 
         # -- Dot collection --
         for dot in self.dots[:]:
-            if dot.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(dot.grid_pos)):
                 self.dots.remove(dot)
                 self.score += SCORE_DOT
 
         # -- Power pellet collection --
         for pellet in self.power_pellets[:]:
-            if pellet.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(pellet.grid_pos)):
                 self.power_pellets.remove(pellet)
                 self.score += SCORE_POWER_PELLET
                 self.power_timer = FRIGHTENED_DURATION
@@ -192,14 +231,24 @@ class Game:
 
         # -- Speed boost collection --
         for boost in self.speed_boosts[:]:
-            if boost.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(boost.grid_pos)):
                 self.speed_boosts.remove(boost)
                 self.speed_boost_timer = SPEED_BOOST_DURATION
-                self.player.speed = int(PLAYER_SPEED * SPEED_BOOST_MULTIPLIER)
+                self.player.speed = PLAYER_SPEED * SPEED_BOOST_MULTIPLIER
+
+                if not self.is_fast_bgm:
+                    # Switch to fast music
+                    current_pos_sec = self.music_pos_at_switch + (pygame.mixer.music.get_pos() / 1000.0)
+                    new_pos = (current_pos_sec / 1.5) % 20.46 # Approx length of fast
+                    pygame.mixer.music.load(self.bgm_fast)
+                    pygame.mixer.music.play(-1, start=new_pos)
+                    self.is_fast_bgm = True
+                    self.music_pos_at_switch = new_pos
 
         # -- Win check --
         if not self.dots and not self.power_pellets:
             self.state = STATE_WIN
+            pygame.mixer.music.stop()
             return
 
         # -- Enemies --
@@ -207,7 +256,13 @@ class Game:
             enemy.update(self.grid, self.wall_rects, self.player, self.enemies)
 
             # Collision with player
-            if enemy.get_grid_pos() == player_grid:
+            enemy_rect = pygame.Rect(
+                enemy.pixel_x + margin,
+                enemy.pixel_y + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
+            if enemy_rect.colliderect(player_rect):
                 if enemy.state == "FRIGHTENED":
                     # Eat the ghost
                     self.score += SCORE_GHOST_EAT * self.ghost_eat_combo
@@ -220,7 +275,13 @@ class Game:
         # -- Moving obstacle --
         if self.obstacle:
             self.obstacle.update(self.grid)
-            if self.obstacle.get_grid_pos() == player_grid:
+            obs_rect = pygame.Rect(
+                self.obstacle.pixel_x + margin,
+                self.obstacle.pixel_y + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
+            if obs_rect.colliderect(player_rect):
                 if self.power_timer > 0:
                     # Destroy obstacle when powered up
                     self.obstacle = None
@@ -350,6 +411,7 @@ class Game:
         self.lives -= 1
         if self.lives <= 0:
             self.state = STATE_GAME_OVER
+            pygame.mixer.music.stop()
         else:
             # Reset positions
             spawn_col, spawn_row = self.maze_gen.get_player_spawn()
