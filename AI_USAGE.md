@@ -66,3 +66,19 @@ Set up the AI_USAGE.md file with the agreed-upon rules and template format for t
 
 **Explanation of changes:**
 Filled in the correct details for Prompt 1 and added the documentation section for Prompt 2, inserting placeholders for the commit hashes as requested.
+
+---
+
+### Prompt 3
+
+**The prompt:**
+
+> "THIS IS PERFECT! Create an antigravity agent skill file for this because yo understood it so perfectly."
+> "Update the ai_usage docs to relfect your last changes"
+
+**Commits:**
+
+- `d8c5407ccb9bd44c11cf41c11769364683e64838` - build: Create AI Usage Documentation Agent Skill
+
+**Explanation of changes:**
+Created the `.agents/skills/document_ai_usage/SKILL.md` file to formalize the project's AI tracking rules as an agent "skill". This automatically instructs all future AI agents operating in this workspace on how to correctly document their usage in `AI_USAGE.md`.
