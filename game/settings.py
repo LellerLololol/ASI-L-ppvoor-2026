@@ -47,8 +47,8 @@ COLOR_EYES   = (255, 255, 255)     # Ghost eye whites
 # ---------------------------------------------------------------------------
 # Player
 # ---------------------------------------------------------------------------
-PLAYER_SPEED = 4             # Pixels per frame (must divide CELL_SIZE evenly)
-PLAYER_SQUASH = 0.12         # Squash & stretch intensity
+PLAYER_SPEED = 2             # Pixels per frame (must divide CELL_SIZE evenly)
+PLAYER_SQUASH = 0.16         # Squash & stretch intensity
 PLAYER_EYE_OFFSET = (3, -3)  # Eye position relative to center
 PLAYER_TRAIL_LIFETIME = 14   # Frames a trail particle lives
 PLAYER_LIVES = 3
@@ -56,8 +56,8 @@ PLAYER_LIVES = 3
 # ---------------------------------------------------------------------------
 # Enemies
 # ---------------------------------------------------------------------------
-ENEMY_SPEED = 3              # Base ghost speed (pixels / frame)
-ENEMY_FRIGHTENED_SPEED = 2   # Speed while frightened
+ENEMY_SPEED = 1.6              # Base ghost speed (pixels / frame)
+ENEMY_FRIGHTENED_SPEED = 1   # Speed while frightened
 ENEMY_EATEN_SPEED = 6        # Speed when returning to spawn
 FRIGHTENED_DURATION = 480     # Frames (~8 seconds at 60 FPS)
 CLYDE_CHASE_RADIUS = 8       # Tiles — Clyde switches to A* inside this

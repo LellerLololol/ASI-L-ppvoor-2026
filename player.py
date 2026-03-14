@@ -148,9 +148,9 @@ class Player(pygame.sprite.Sprite):
             DIR_NONE:  scaled,
         }
 
-        # ---- position (pixel coords) ----
-        self.pixel_x: float = x * tile_size
-        self.pixel_y: float = y * tile_size
+        # ---- position (pixel coords, strictly int) ----
+        self.pixel_x: int = x * tile_size
+        self.pixel_y: int = y * tile_size
 
         # ---- movement state ----
         self.direction: tuple = DIR_NONE
@@ -184,21 +184,35 @@ class Player(pygame.sprite.Sprite):
         """
         self._frame_counter += 1
 
-        # -- attempt direction change when tile-aligned --
-        if self._is_tile_aligned():
-            if self._can_move(self.queued_direction, wall_rects):
-                self.direction = self.queued_direction
+        # -- move pixel-by-pixel --
+        # This makes the game robust to any speed value (even ones that
+        # do not divide tile_size evenly), preventing grid skipping.
+        moved_any = False
 
-        # -- move in current direction (if not blocked) --
-        if self.direction != DIR_NONE:
-            if self._can_move(self.direction, wall_rects):
-                self.pixel_x += self.direction[0] * self.speed
-                self.pixel_y += self.direction[1] * self.speed
-                self._spawn_trail_particle()
-            else:
-                # stop when hitting a wall on the current direction
-                if self._is_tile_aligned():
-                    self.direction = DIR_NONE
+        # Allow immediate 180-degree reversal even if not tile-aligned
+        if self.direction != DIR_NONE and self.queued_direction == (-self.direction[0], -self.direction[1]):
+            self.direction = self.queued_direction
+
+        for _ in range(int(self.speed)):
+            # 1. Try to turn when exactly on a tile intersection
+            if self._is_tile_aligned():
+                if self._can_move_dist(self.queued_direction, 1, wall_rects):
+                    self.direction = self.queued_direction
+
+            # 2. Stop if hitting a wall, otherwise move 1 pixel
+            if self.direction != DIR_NONE:
+                if not self._can_move_dist(self.direction, 1, wall_rects):
+                    # Only zero out direction perfectly on grid so we don't get stuck slightly off
+                    if self._is_tile_aligned():
+                        self.direction = DIR_NONE
+                    break
+                
+                self.pixel_x += self.direction[0]
+                self.pixel_y += self.direction[1]
+                moved_any = True
+
+        if moved_any:
+            self._spawn_trail_particle()
 
         # -- update existing particles --
         self._particles = [p for p in self._particles if p.update()]
@@ -235,22 +249,33 @@ class Player(pygame.sprite.Sprite):
             and self.pixel_y % self.tile_size == 0
         )
 
-    def _can_move(
-        self, direction: tuple, wall_rects: list[pygame.Rect]
+    def _can_move_dist(
+        self, direction: tuple, dist: int, wall_rects: list[pygame.Rect]
     ) -> bool:
-        """Check whether moving one step in *direction* would hit a wall."""
-        future_x = self.pixel_x + direction[0] * self.speed
-        future_y = self.pixel_y + direction[1] * self.speed
+        """Check whether moving *dist* pixels in *direction* hits a wall."""
+        future_x = self.pixel_x + direction[0] * dist
+        future_y = self.pixel_y + direction[1] * dist
 
-        # shrink the player rect slightly for forgiving collision
-        margin = 2
-        future_rect = pygame.Rect(
-            future_x + margin,
-            future_y + margin,
-            self.tile_size - margin * 2,
-            self.tile_size - margin * 2,
-        )
-        return not any(future_rect.colliderect(w) for w in wall_rects)
+        # Mathematical grid validation:
+        # A player at (x, y) with size T occupies tiles from x to x+T-1.
+        # We calculate exactly which grid columns and rows the player overlaps.
+        left_col = future_x // self.tile_size
+        right_col = (future_x + self.tile_size - 1) // self.tile_size
+        top_row = future_y // self.tile_size
+        bottom_row = (future_y + self.tile_size - 1) // self.tile_size
+
+        # Check if any of the overlapping grid cells contain a wall
+        for r in range(top_row, bottom_row + 1):
+            for c in range(left_col, right_col + 1):
+                # We identify walls by their grid position (derived from the rect)
+                wall_x = c * self.tile_size
+                wall_y = r * self.tile_size
+                # Since wall_rects are provided directly, we just check if 
+                # a wall exists at this exact grid coordinate.
+                for w in wall_rects:
+                    if w.x == wall_x and w.y == wall_y:
+                        return False
+        return True
 
     # ------------------------------------------------------------------
     # Helpers – visual effects
