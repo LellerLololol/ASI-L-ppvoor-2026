@@ -277,6 +277,21 @@ Additionally, proactively updated `player.py`'s movement logic to use a `movemen
 
 ### Prompt 12
 
+> "the collisions currently seem to work only if the centers of each object collide. so for gathering points or collisions between the player and the ghosts the edges must be checked instead"
+
+**Commits:**
+
+- `29b4e3d2b53cdb688c548fff5b26e1951b1f94e2` - fix: Convert grid-coordinate collisions to edge-based rectangular hitboxes
+
+**Explanation of changes:**
+The original collision logic in `game/engine.py` strictly relied on comparing mathematical grid indices (e.g., `if dot.grid_pos == player_grid`), meaning collisions only registered when the dead-center of the player perfectly overlapped the dead-center of the item or enemy tile.
+
+This was resolved by replacing all grid coordinate checks with standard `pygame.Rect.colliderect()` intersection evaluations. Bounding box pixel coordinates are now generated for the player, enemies, speed boosts, power pellets, dots, and moving obstacles. A universal 6-pixel 'forgiveness' margin was applied to these rectangles (shrinking a 32x32 hit box down to 20x20 in the center) so that players can cleanly sideswipe through dots and aren't unfairly clipped by enemies when barely grazing their outer edges.
+
+---
+
+### Prompt 13
+
 **The prompt:**
 
 > "I added background music for the game in the assets folder. Also make it so that if the player gets the speed power up the background music also gets faster."
@@ -289,3 +304,5 @@ Additionally, proactively updated `player.py`'s movement logic to use a `movemen
 The provided asset `assets/Hechizo_en_la_Pista.mp4` was a video file, which `pygame.mixer.music` cannot play natively. FFmpeg was used to strip the video and convert the audio track into a standard `bgm_normal.wav` file. Then, it was used again with the `-filter:a "atempo=1.5"` flag to generate a pre-sped-up `bgm_fast.wav` track.
 
 In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_normal.wav` was set to endlessly loop upon game start. Logic was added to the main update loop so that when the player picks up a speed boost (or when the boost timer runs out), the engine calculates the exact playback position (`pygame.mixer.music.get_pos()`) and dynamically swaps between the normal and fast tracks using `pygame.mixer.music.play(-1, start=new_pos)`, maintaining a seamless chronological sync between the audio and gameplay state.
+
+---
