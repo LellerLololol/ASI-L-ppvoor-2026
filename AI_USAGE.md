@@ -171,3 +171,36 @@ Implemented all 5 phases of the Pac-Man game:
 - **Phase 3**: Created four pathfinding algorithms — `game/pathfinding/astar.py` (A* with Manhattan heuristic), `game/pathfinding/bfs.py` (BFS), `game/pathfinding/interceptor.py` (predictive targeting 4 tiles ahead), `game/pathfinding/wanderer.py` (random walk + proximity A* chase). Created `game/entities/enemy.py` with base `Enemy` class and four subclasses: Blinky (A\*), Pinky (interceptor), Inky (BFS), Clyde (wanderer).
 - **Phase 4**: Created `game/items/collectibles.py` with Dot, PowerPellet (pulsing glow), SpeedBoost (lightning bolt), and MovingObstacle (rotating spiky hazard). Scoring, lives, power-up timers, and win/lose conditions all wired into engine.
 - **Phase 5**: Updated `main.py` to thin entry point, updated `README.md`, created `requirements.txt`.
+
+---
+
+### Prompt 7
+
+**The prompt:**
+
+> [The game crashed with `pygame.error: File is not a Windows BMP file` when loading the PNG sprite. User asked to reinstall the pygame build.]
+
+**Commits:**
+
+- No commits made
+
+**Explanation of changes:**
+The standard `pygame` package installed without SDL_image extended support on Python 3.14, so it could only load BMP files. Uninstalled `pygame` and installed `pygame-ce` (Pygame Community Edition), which includes full SDL_image support. Updated `requirements.txt` to reference `pygame-ce>=2.5.0`.
+
+---
+
+### Prompt 8
+
+**The prompt:**
+
+> "There is a problem with the ghosts clipping and running through the wall and sometimes even just exiting the map. This should not happen. The ghosts should be confined to the map borders and the places that the player can move to."
+
+**Commits:**
+
+- `9b19d87f9af64f03283af7622aa6cfdc3ce1ff31` - fix: Prevent ghost wall-clipping and switch to pygame-ce
+
+**Explanation of changes:**
+Fixed two root causes of ghost wall-clipping:
+
+1. `ENEMY_SPEED` was 3 which doesn't divide `CELL_SIZE` (32) evenly, so ghosts were never detected as tile-aligned and could never check walls. Changed to 4 (and `EATEN_SPEED` from 6→8).
+2. Rewrote `_follow_path()` in `game/entities/enemy.py` to validate every cell transition against the grid before moving, and to snap pixel position to exact grid coordinates to prevent cumulative drift. Verified with automated test: 0 wall violations across 2000 frames.

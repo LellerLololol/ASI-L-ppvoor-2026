@@ -56,9 +56,9 @@ PLAYER_LIVES = 3
 # ---------------------------------------------------------------------------
 # Enemies
 # ---------------------------------------------------------------------------
-ENEMY_SPEED = 3              # Base ghost speed (pixels / frame)
+ENEMY_SPEED = 4              # Base ghost speed (must divide CELL_SIZE=32 evenly)
 ENEMY_FRIGHTENED_SPEED = 2   # Speed while frightened
-ENEMY_EATEN_SPEED = 6        # Speed when returning to spawn
+ENEMY_EATEN_SPEED = 8        # Speed when returning to spawn
 FRIGHTENED_DURATION = 480     # Frames (~8 seconds at 60 FPS)
 CLYDE_CHASE_RADIUS = 8       # Tiles — Clyde switches to A* inside this
 
@@ -71,7 +71,7 @@ SCORE_GHOST_EAT = 200
 SPEED_BOOST_DURATION = 300    # Frames (~5 seconds)
 SPEED_BOOST_MULTIPLIER = 1.5
 SPEED_BOOST_SPAWN_INTERVAL = 1800  # Every ~30 seconds
-OBSTACLE_SPEED = 2
+OBSTACLE_SPEED = 2            # Must divide CELL_SIZE evenly
 
 # ---------------------------------------------------------------------------
 # Maze generation
