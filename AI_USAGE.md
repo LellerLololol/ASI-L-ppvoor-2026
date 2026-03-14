@@ -334,7 +334,7 @@ In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_norma
 
 **Commits:**
 
-- `[Paste Commit Hash Here]` - refactor: Unify Player and Ghost movement collision to exclusively use the 2D grid array
+- `73de0a627a98df2af0d61da5e0fd7b50fb53c381` - refactor: Unify Player and Ghost movement collision to exclusively use the 2D grid array
 
 **Explanation of changes:**
 The user correctly identified an architectural discrepancy: `Enemy` entities were verifying their movement directly against indices in the `grid` integer array (e.g., `grid[ny][nx] == 0`), while the `Player` was still relying on an expensive iteration over a list of `pygame.Rect` objects (`wall_rects`) to check for wall intersections.
