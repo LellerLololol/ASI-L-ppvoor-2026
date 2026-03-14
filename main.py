@@ -1,10 +1,13 @@
 import sys
+import map
  
 import pygame
 from pygame.locals import *
  
 pygame.init()
- 
+
+grid = [32, 48]
+
 fps = 60
 fpsClock = pygame.time.Clock()
  
@@ -23,9 +26,10 @@ while True:
   # Update.
   
   # Draw.
-  points = [(-50, -50), (50, -50), (50, 50), (-50, 50)]
-  pygame.draw.polygon(screen, (0, 255, 0), points, width=0)
+  boxes = map.createMap(width, height, grid)
+  for b in boxes:
+    pygame.draw.rect(screen, (0, 255, 0), b)
 
 
   pygame.display.flip()
-  fpsClock.tick(fps)a
+  fpsClock.tick(fps)
