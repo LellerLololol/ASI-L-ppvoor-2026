@@ -323,3 +323,22 @@ Fixed by refactoring `MovingObstacle.update()` to use the exact same float accum
 The provided asset `assets/Hechizo_en_la_Pista.mp4` was a video file, which `pygame.mixer.music` cannot play natively. FFmpeg was used to strip the video and convert the audio track into a standard `bgm_normal.wav` file. Then, it was used again with the `-filter:a "atempo=1.5"` flag to generate a pre-sped-up `bgm_fast.wav` track.
 
 In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_normal.wav` was set to endlessly loop upon game start. Logic was added to the main update loop so that when the player picks up a speed boost (or when the boost timer runs out), the engine calculates the exact playback position (`pygame.mixer.music.get_pos()`) and dynamically swaps between the normal and fast tracks using `pygame.mixer.music.play(-1, start=new_pos)`, maintaining a seamless chronological sync between the audio and gameplay state.
+
+---
+
+### Prompt 15
+
+**The prompt:**
+
+> "the movement checking for the ghosts and player are fundamentally different. use the grid system"
+
+**Commits:**
+
+- `[Paste Commit Hash Here]` - refactor: Unify Player and Ghost movement collision to exclusively use the 2D grid array
+
+**Explanation of changes:**
+The user correctly identified an architectural discrepancy: `Enemy` entities were verifying their movement directly against indices in the `grid` integer array (e.g., `grid[ny][nx] == 0`), while the `Player` was still relying on an expensive iteration over a list of `pygame.Rect` objects (`wall_rects`) to check for wall intersections.
+
+This was resolved by rewriting `Player._can_move_dist()` in `player.py` to calculate exactly which grid columns and rows the player's bounding box overlaps, and checking those explicit indices in the `grid` array instead of rectangles.
+
+Because both the player and the enemies now securely rely entirely on the grid array for movement bounding, the `_build_wall_rects()` method and the `self.wall_rects` variable were completely stripped out of `game/engine.py` and removed from the `Enemy` method signatures, saving memory and eliminating redundant coordinate conversions.

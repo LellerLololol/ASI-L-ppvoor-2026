@@ -86,7 +86,6 @@ class Enemy:
     def update(
         self,
         grid: list[list[int]],
-        wall_rects: list[pygame.Rect],
         player,
         all_enemies: list,
     ) -> None:
