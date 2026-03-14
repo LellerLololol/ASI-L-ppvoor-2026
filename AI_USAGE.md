@@ -272,3 +272,20 @@ Multiplied all movement speed constants in `game/settings.py` by 1.5:
 - `OBSTACLE_SPEED` from 2 to 3
 
 Additionally, proactively updated `player.py`'s movement logic to use a `movement_accum` float accumulator just like the ghosts do. The previous logic cast `self.speed` directly to an `int()`. Since the player base speed is now `3`, grabbing a 1.5x speed boost changes their speed to `4.5`. The old logic would have truncated this to exactly `4`, stripping away the `.5` advantage entirely and nerfing the powerup. The float accumulator allows the player to correctly bank and consume those fractions to effectively move at perfectly `4.5` pixels per frame.
+
+---
+
+### Prompt 12
+
+**The prompt:**
+
+> "I added background music for the game in the assets folder. Also make it so that if the player gets the speed power up the background music also gets faster."
+
+**Commits:**
+
+- `78c437304d9a7705beafabfa484c89a85d61437d` - feat: Add dynamic background music that speeds up with player powerups
+
+**Explanation of changes:**
+The provided asset `assets/Hechizo_en_la_Pista.mp4` was a video file, which `pygame.mixer.music` cannot play natively. FFmpeg was used to strip the video and convert the audio track into a standard `bgm_normal.wav` file. Then, it was used again with the `-filter:a "atempo=1.5"` flag to generate a pre-sped-up `bgm_fast.wav` track.
+
+In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_normal.wav` was set to endlessly loop upon game start. Logic was added to the main update loop so that when the player picks up a speed boost (or when the boost timer runs out), the engine calculates the exact playback position (`pygame.mixer.music.get_pos()`) and dynamically swaps between the normal and fast tracks using `pygame.mixer.music.play(-1, start=new_pos)`, maintaining a seamless chronological sync between the audio and gameplay state.
