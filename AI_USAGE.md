@@ -272,3 +272,20 @@ Multiplied all movement speed constants in `game/settings.py` by 1.5:
 - `OBSTACLE_SPEED` from 2 to 3
 
 Additionally, proactively updated `player.py`'s movement logic to use a `movement_accum` float accumulator just like the ghosts do. The previous logic cast `self.speed` directly to an `int()`. Since the player base speed is now `3`, grabbing a 1.5x speed boost changes their speed to `4.5`. The old logic would have truncated this to exactly `4`, stripping away the `.5` advantage entirely and nerfing the powerup. The float accumulator allows the player to correctly bank and consume those fractions to effectively move at perfectly `4.5` pixels per frame.
+
+---
+
+### Prompt 12
+
+**The prompt:**
+
+> "the collisions currently seem to work only if the centers of each object collide. so for gathering points or collisions between the player and the ghosts the edges must be checked instead"
+
+**Commits:**
+
+- `[Paste Commit Hash Here]` - fix: Convert grid-coordinate collisions to edge-based rectangular hitboxes
+
+**Explanation of changes:**
+The original collision logic in `game/engine.py` strictly relied on comparing mathematical grid indices (e.g., `if dot.grid_pos == player_grid`), meaning collisions only registered when the dead-center of the player perfectly overlapped the dead-center of the item or enemy tile.
+
+This was resolved by replacing all grid coordinate checks with standard `pygame.Rect.colliderect()` intersection evaluations. Bounding box pixel coordinates are now generated for the player, enemies, speed boosts, power pellets, dots, and moving obstacles. A universal 6-pixel 'forgiveness' margin was applied to these rectangles (shrinking a 32x32 hit box down to 20x20 in the center) so that players can cleanly sideswipe through dots and aren't unfairly clipped by enemies when barely grazing their outer edges.

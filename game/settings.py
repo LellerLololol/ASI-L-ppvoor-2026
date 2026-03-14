@@ -58,7 +58,7 @@ PLAYER_LIVES = 3
 # ---------------------------------------------------------------------------
 ENEMY_SPEED = 2.4              # Base ghost speed (pixels / frame)
 ENEMY_FRIGHTENED_SPEED = 1.5   # Speed while frightened
-ENEMY_EATEN_SPEED = 9          # Speed when returning to spawn
+ENEMY_EATEN_SPEED = 6          # Speed when returning to spawn
 FRIGHTENED_DURATION = 480     # Frames (~8 seconds at 60 FPS)
 CLYDE_CHASE_RADIUS = 8       # Tiles — Clyde switches to A* inside this
 

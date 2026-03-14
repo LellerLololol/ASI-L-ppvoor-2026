@@ -171,17 +171,33 @@ class Game:
 
         # -- Player --
         self.player.update(self.wall_rects)
-        player_grid = self.player.get_grid_pos()
+        
+        # Player hitbox (shrunk slightly for fair collisions)
+        margin = 6
+        player_rect = pygame.Rect(
+            self.player.pixel_x + margin,
+            self.player.pixel_y + margin,
+            CELL_SIZE - margin * 2,
+            CELL_SIZE - margin * 2
+        )
+
+        def get_item_rect(grid_pos):
+            return pygame.Rect(
+                grid_pos[0] * CELL_SIZE + margin,
+                grid_pos[1] * CELL_SIZE + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
 
         # -- Dot collection --
         for dot in self.dots[:]:
-            if dot.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(dot.grid_pos)):
                 self.dots.remove(dot)
                 self.score += SCORE_DOT
 
         # -- Power pellet collection --
         for pellet in self.power_pellets[:]:
-            if pellet.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(pellet.grid_pos)):
                 self.power_pellets.remove(pellet)
                 self.score += SCORE_POWER_PELLET
                 self.power_timer = FRIGHTENED_DURATION
@@ -192,7 +208,7 @@ class Game:
 
         # -- Speed boost collection --
         for boost in self.speed_boosts[:]:
-            if boost.grid_pos == player_grid:
+            if player_rect.colliderect(get_item_rect(boost.grid_pos)):
                 self.speed_boosts.remove(boost)
                 self.speed_boost_timer = SPEED_BOOST_DURATION
                 self.player.speed = int(PLAYER_SPEED * SPEED_BOOST_MULTIPLIER)
@@ -207,7 +223,13 @@ class Game:
             enemy.update(self.grid, self.wall_rects, self.player, self.enemies)
 
             # Collision with player
-            if enemy.get_grid_pos() == player_grid:
+            enemy_rect = pygame.Rect(
+                enemy.pixel_x + margin,
+                enemy.pixel_y + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
+            if enemy_rect.colliderect(player_rect):
                 if enemy.state == "FRIGHTENED":
                     # Eat the ghost
                     self.score += SCORE_GHOST_EAT * self.ghost_eat_combo
@@ -220,7 +242,13 @@ class Game:
         # -- Moving obstacle --
         if self.obstacle:
             self.obstacle.update(self.grid)
-            if self.obstacle.get_grid_pos() == player_grid:
+            obs_rect = pygame.Rect(
+                self.obstacle.pixel_x + margin,
+                self.obstacle.pixel_y + margin,
+                CELL_SIZE - margin * 2,
+                CELL_SIZE - margin * 2
+            )
+            if obs_rect.colliderect(player_rect):
                 if self.power_timer > 0:
                     # Destroy obstacle when powered up
                     self.obstacle = None
