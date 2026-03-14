@@ -182,7 +182,11 @@ Implemented all 5 phases of the Pac-Man game:
 
 **Commits:**
 
+<<<<<<< HEAD
 - `d31761f06bd23ef9a7a9acf4053263f1ee5c4574` - fix: Implement robust pixel-by-pixel movement with strict grid-math collision to prevent getting stuck
+=======
+- `[Paste Commit Hash Here]` - fix: Implement robust pixel-by-pixel movement with strict grid-math collision to prevent getting stuck
+>>>>>>> d31761f06bd23ef9a7a9acf4053263f1ee5c4574
 
 **Explanation of changes:**
 Fixed two critical movement bugs in `player.py`. First, the speed boost item multiplied player speed by 1.5 (making it 3). Because 3 doesn't divide the grid cell size (32) evenly, the player skipped past exact grid alignments and got permanently stuck. This was fixed by implementing pixel-by-pixel movement under the hood. Second, the player could still get stuck in 1x1 tight corridors because the Pygame Rect collision allowed sinking 1 pixel into flush walls to avoid scraping, breaking the mathematical grid alignment required to turn. This was fixed by entirely replacing Pygame Rect collisions with strict mathematical grid-index overlapping checks, guaranteeing the player can never intersect a wall tile and will always arrive at intersections perfectly aligned.
