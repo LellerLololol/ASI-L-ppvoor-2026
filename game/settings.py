@@ -62,6 +62,11 @@ ENEMY_EATEN_SPEED = 6        # Speed when returning to spawn
 FRIGHTENED_DURATION = 480     # Frames (~8 seconds at 60 FPS)
 CLYDE_CHASE_RADIUS = 8       # Tiles — Clyde switches to A* inside this
 
+# Scatter/Chase cycle — ghosts alternate between chasing and retreating
+SCATTER_DURATION = 420        # Frames (~7 seconds) ghosts scatter to corners
+CHASE_DURATION = 1200         # Frames (~20 seconds) ghosts chase the player
+ENEMY_REPATH_INTERVAL = 20    # Frames between pathfinding recalculations
+
 # ---------------------------------------------------------------------------
 # Items / Scoring
 # ---------------------------------------------------------------------------
@@ -71,7 +76,7 @@ SCORE_GHOST_EAT = 200
 SPEED_BOOST_DURATION = 300    # Frames (~5 seconds)
 SPEED_BOOST_MULTIPLIER = 1.5
 SPEED_BOOST_SPAWN_INTERVAL = 1800  # Every ~30 seconds
-OBSTACLE_SPEED = 2
+OBSTACLE_SPEED = 2            # Must divide CELL_SIZE evenly
 
 # ---------------------------------------------------------------------------
 # Maze generation
