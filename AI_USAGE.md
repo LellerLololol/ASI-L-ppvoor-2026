@@ -342,3 +342,29 @@ The user correctly identified an architectural discrepancy: `Enemy` entities wer
 This was resolved by rewriting `Player._can_move_dist()` in `player.py` to calculate exactly which grid columns and rows the player's bounding box overlaps, and checking those explicit indices in the `grid` array instead of rectangles.
 
 Because both the player and the enemies now securely rely entirely on the grid array for movement bounding, the `_build_wall_rects()` method and the `self.wall_rects` variable were completely stripped out of `game/engine.py` and removed from the `Enemy` method signatures, saving memory and eliminating redundant coordinate conversions.
+
+---
+
+### Prompt 16
+
+**The prompt:**
+
+> "New problem: enemies (ghosts) when dead should go to their respawn point and do that by traveling through walls. Also, add a 3 second waiting windows upon starting the game."
+
+**Commits:**
+
+- `964483ce4b174819950d15753a6a3c7c4713204f` - feat: Add 3-second start delay and allow dead ghosts to path through walls
+
+**Explanation of changes:**
+Implemented the two requested features to bring the game closer to classic Pac-Man mechanics:
+
+1. **Dead ghosts traveling through walls:**
+   - Modified the A\* pathfinding algorithm in `game/pathfinding/astar.py` to accept an `ignore_walls` boolean flag. If `True`, it bypasses the `grid[ny][nx] == 1` check.
+   - Updated `game/entities/enemy.py`. When a ghost is in the `EATEN` state, it now calls `astar.find_path(..., ignore_walls=True)`.
+   - Additionally, updated the ghost's internal pixel-by-pixel `_follow_path` loop to also bypass its own wall-collision checks (`grid[ny][nx] != 1`) if `is_eaten == True`, allowing them to literally float straight through the maze walls back to the monster pen.
+
+2. **3-Second start delay:**
+   - Introduced a new `STATE_START_DELAY` alongside `STATE_PLAYING` in `game/engine.py`.
+   - Set the initial `self.state` in `_setup_new_game` (and after player deaths) to this new state, accompanied by a `start_delay_timer` initialized to 3 times the frames-per-second (`FPS * 3`).
+   - The engine's main `run()` loop was updated to tick this timer down and only transition to `STATE_PLAYING` once it hits zero.
+   - Designed a new `draw_start_delay` method in `game/maze/renderer.py` that renders a bold yellow "GET READY!" string and the current countdown integer on top of the map.

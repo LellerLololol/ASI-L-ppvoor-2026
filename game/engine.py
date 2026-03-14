@@ -33,6 +33,7 @@ from game.items.collectibles import Dot, PowerPellet, SpeedBoost, MovingObstacle
 STATE_PLAYING = "PLAYING"
 STATE_GAME_OVER = "GAME_OVER"
 STATE_WIN = "WIN"
+STATE_START_DELAY = "START_DELAY"
 
 
 class Game:
@@ -59,7 +60,8 @@ class Game:
     # ------------------------------------------------------------------
     def _setup_new_game(self) -> None:
         """Initialise (or re-initialise) all game objects."""
-        self.state = STATE_PLAYING
+        self.state = STATE_START_DELAY
+        self.start_delay_timer = FPS * 3  # 3 seconds at 60 FPS
         self.score = 0
         self.lives = PLAYER_LIVES
         self.power_timer = 0
@@ -119,6 +121,11 @@ class Game:
         """Enter the main game loop — blocks until the window is closed."""
         while True:
             self._handle_events()
+
+            if self.state == STATE_START_DELAY:
+                self.start_delay_timer -= 1
+                if self.start_delay_timer <= 0:
+                    self.state = STATE_PLAYING
 
             if self.state == STATE_PLAYING:
                 self._update()
@@ -323,6 +330,9 @@ class Game:
             self.renderer.draw_game_over(self.screen, self.score)
         elif self.state == STATE_WIN:
             self.renderer.draw_win_screen(self.screen, self.score)
+        elif self.state == STATE_START_DELAY:
+            seconds_left = (self.start_delay_timer // FPS) + 1
+            self.renderer.draw_start_delay(self.screen, seconds_left)
 
         pygame.display.flip()
 
@@ -399,6 +409,8 @@ class Game:
             self.state = STATE_GAME_OVER
             pygame.mixer.music.stop()
         else:
+            self.state = STATE_START_DELAY
+            self.start_delay_timer = FPS * 3
             # Reset positions
             spawn_col, spawn_row = self.maze_gen.get_player_spawn()
             self.player.pixel_x = spawn_col * CELL_SIZE

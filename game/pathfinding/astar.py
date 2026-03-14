@@ -20,6 +20,7 @@ def find_path(
     grid: list[list[int]],
     start: tuple[int, int],
     goal: tuple[int, int],
+    ignore_walls: bool = False,
 ) -> list[tuple[int, int]]:
     """Return the shortest path from *start* to *goal* as a list of (col, row).
 
@@ -75,7 +76,7 @@ def find_path(
             # Bounds and wall check
             if not (0 <= ny < rows and 0 <= nx < cols):
                 continue
-            if grid[ny][nx] == 1:
+            if not ignore_walls and grid[ny][nx] == 1:
                 continue
 
             neighbour = (nx, ny)

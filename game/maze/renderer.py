@@ -155,6 +155,22 @@ class MazeRenderer:
         restart_rect = restart_text.get_rect(center=(SCREEN_WIDTH // 2, MAZE_ROWS * CELL_SIZE // 2 + 55))
         surface.blit(restart_text, restart_rect)
 
+    def draw_start_delay(self, surface: pygame.Surface, seconds_left: int) -> None:
+        """Draw a GET READY overlay with a countdown."""
+        font_big = pygame.font.SysFont("monospace", 48, bold=True)
+        
+        text = font_big.render("GET READY!", True, (255, 255, 50))
+        rect = text.get_rect(center=(SCREEN_WIDTH // 2, MAZE_ROWS * CELL_SIZE // 2 - 20))
+        
+        # Outline for better visibility on top of maze
+        pygame.draw.rect(surface, (0, 0, 0), rect.inflate(20, 20))
+        surface.blit(text, rect)
+        
+        count_text = font_big.render(str(seconds_left), True, (255, 255, 255))
+        count_rect = count_text.get_rect(center=(SCREEN_WIDTH // 2, MAZE_ROWS * CELL_SIZE // 2 + 40))
+        pygame.draw.rect(surface, (0, 0, 0), count_rect.inflate(20, 20))
+        surface.blit(count_text, count_rect)
+
     def invalidate_cache(self) -> None:
         """Force the maze surface to be redrawn (call after generating a new maze)."""
         self._cached_surface = None
