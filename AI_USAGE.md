@@ -232,3 +232,20 @@ To balance the perfect pathfinding, implemented the classic Pac-Man "Scatter vs 
 1. `game/settings.py`: Added constants `SCATTER_DURATION` (~7s) and `CHASE_DURATION` (~20s). Reduced base `ENEMY_SPEED` from 4 to 2 (Player speed is 4) so the player can actually outrun them on straightaways.
 2. `game/entities/enemy.py`: Assigned individual corner targets to each ghost type (Blinky=Top-Right, Pinky=Top-Left, Inky=Bottom-Right, Clyde=Bottom-Left).
 3. `game/engine.py`: Wired a `mode_timer` into the game loop. Every ~20 seconds, ghosts universally stop chasing and fall back/scatter towards their respective corners for ~7s. As in the classic arcade game, changing modes immediately reverses ghost direction, creating a rhythmic window of opportunity for the player to counter-attack or escape.
+
+---
+
+### Prompt 10
+
+**The prompt:**
+
+> "I did a pull and and it broke the ghost movement again."
+
+**Commits:**
+
+- `0cd45ed17964ff1c719067a769a570d2ace62877` - fix: Guarantee strict ghost grid alignment across fractional speeds via float accumulator
+
+**Explanation of changes:**
+The team updated ghost speeds to fractional values (`ENEMY_SPEED = 1.6`) in `settings.py`. The previous ghost movement logic relied on integers that cleanly divided into `CELL_SIZE` (`32`) to achieve perfect tile alignments (`pixel_x % 32 == 0`). Fractional speeds broke this, preventing ghosts from ever snapping to intersections to check walls.
+
+Fixed by bringing the ghosts strictly to the same pixel-by-pixel robust movement standard implemented by the team for the player in the previous prompt, but enhanced for fractions. In `game/entities/enemy.py`, ghost pixel coordinates were cast to strictly `int`. A `movement_accum` float was added to `Enemy.__init__`. During `_follow_path()`, the ghost adds its speed (`1.6`) to the accumulator every frame, then peels off the integer part (`1` or `2`) and moves exactly that many discrete pixels inside a loop. This entirely eliminates fractional position drift and guarantees that ghosts will perfectly hit `X % 32 == 0` intersections to execute their pathfinding and wall collision logic, no matter what complex math multiplier or floating point speed is configured.

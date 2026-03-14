@@ -65,8 +65,9 @@ class Enemy:
 
         self.spawn_x = x
         self.spawn_y = y
-        self.pixel_x: float = x * tile_size
-        self.pixel_y: float = y * tile_size
+        self.pixel_x: int = int(x * tile_size)
+        self.pixel_y: int = int(y * tile_size)
+        self.movement_accum: float = 0.0
         self.direction: tuple[int, int] = (0, 0)
 
         # States: "CHASE", "SCATTER", "FRIGHTENED", "EATEN"
@@ -213,59 +214,60 @@ class Enemy:
     def _follow_path(self, grid: list[list[int]]) -> None:
         """Move towards the next waypoint, with strict wall collision.
 
-        Movement only occurs into cells that are verified as paths (0).
-        Direction changes happen exclusively when tile-aligned.
+        Movement is processed pixel-by-pixel using a fractional accumulator.
+        This guarantees ghosts always hit exact tile alignments regardless
+        of their current speed multiplier.
         """
         rows = len(grid)
         cols = len(grid[0]) if rows else 0
 
-        if self._is_tile_aligned():
-            cx, cy = self.get_grid_pos()
+        self.movement_accum += self.speed
+        pixels_to_move = int(self.movement_accum)
+        self.movement_accum -= pixels_to_move
 
-            # Determine next desired direction
-            next_dir = self.direction
+        for _ in range(pixels_to_move):
+            if self._is_tile_aligned():
+                cx, cy = self.get_grid_pos()
 
-            if self._path and self._path_index < len(self._path):
-                # Follow the path
-                target = self._path[self._path_index]
-                dx = target[0] - cx
-                dy = target[1] - cy
+                # Determine next desired direction
+                next_dir = self.direction
 
-                # Clamp to unit direction
-                if dx != 0:
-                    dx = 1 if dx > 0 else -1
-                if dy != 0:
-                    dy = 1 if dy > 0 else -1
+                if self._path and self._path_index < len(self._path):
+                    # Follow the path
+                    target = self._path[self._path_index]
+                    dx = target[0] - cx
+                    dy = target[1] - cy
 
-                next_dir = (dx, dy)
-                self._path_index += 1
-            elif self.direction == (0, 0):
-                # Stopped with no path — pick a random direction
-                next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
-            else:
-                # No path, already moving — check if we can keep going
-                nx, ny = cx + self.direction[0], cy + self.direction[1]
-                if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
-                    # Blocked — pick a new random valid direction
+                    # Clamp to unit direction
+                    if dx != 0:
+                        dx = 1 if dx > 0 else -1
+                    if dy != 0:
+                        dy = 1 if dy > 0 else -1
+
+                    next_dir = (dx, dy)
+                    self._path_index += 1
+                elif self.direction == (0, 0):
+                    # Stopped with no path — pick a random direction
                     next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
+                else:
+                    # No path, already moving — check if we can keep going
+                    nx, ny = cx + self.direction[0], cy + self.direction[1]
+                    if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
+                        # Blocked — pick a new random valid direction
+                        next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
 
-            # Validate the chosen direction against the grid
-            nx, ny = cx + next_dir[0], cy + next_dir[1]
-            if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
-                self.direction = next_dir
-            else:
-                # Even the chosen direction is blocked — stop
-                self.direction = (0, 0)
-                return
+                # Validate the chosen direction against the grid
+                nx, ny = cx + next_dir[0], cy + next_dir[1]
+                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
+                    self.direction = next_dir
+                else:
+                    # Even the chosen direction is blocked — stop
+                    self.direction = (0, 0)
 
-            # Snap pixel position to exact grid (prevents cumulative drift)
-            self.pixel_x = cx * self.tile_size
-            self.pixel_y = cy * self.tile_size
-
-        # Only move if we have a valid direction
-        if self.direction != (0, 0):
-            self.pixel_x += self.direction[0] * self.speed
-            self.pixel_y += self.direction[1] * self.speed
+            # Move exactly 1 pixel if we have a valid direction
+            if self.direction != (0, 0):
+                self.pixel_x += self.direction[0]
+                self.pixel_y += self.direction[1]
 
     def _draw_eyes(self, surface: pygame.Surface, cx: int, cy: int, radius: int) -> None:
         """Draw ghost eyes with pupils looking in movement direction."""
