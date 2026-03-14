@@ -82,3 +82,18 @@ Filled in the correct details for Prompt 1 and added the documentation section f
 
 **Explanation of changes:**
 Created the `.agents/skills/document_ai_usage/SKILL.md` file to formalize the project's AI tracking rules as an agent "skill". This automatically instructs all future AI agents operating in this workspace on how to correctly document their usage in `AI_USAGE.md`.
+
+---
+
+### Prompt 4
+
+**The prompt:**
+
+> Create the Pac-Man player character and movement system using Pygame. The code should be well-structured and clean. My part of the assignment is creating the character and making the movement. Use my hand-made 16x16 pixel art sprite (`assets/PacManCharacter.png`). Only create files directly connected to my part — just `player.py`, no settings or game loop files. Support both WASD and arrow keys. Make speed, squash & stretch strength, and all visual parameters configurable variables (don't hardcode anything). The sprite's eyes already exist in the pixel art, so position any overlay eyes correctly. Flip the character sprite to face the direction of movement.
+
+**Commits:**
+
+- `22323e2` - feat: Add Player class with grid-aligned movement and visual effects
+
+**Explanation of changes:**
+Created `player.py` containing the `Player` class (extends `pygame.sprite.Sprite`) responsible for the Pac-Man character and movement system. The class loads and scales the user's 16×16 pixel art sprite, pre-computes directional variants (flip/rotate) so the character faces its movement direction, and implements grid-aligned movement with wall collision detection. Visual effects include configurable squash & stretch animation, directional eye pupil overlay aligned with the sprite's existing eyes, and a fading particle trail. All parameters (speed, squash amount, eye offset, trail lifetime, colors, pupil size/shift) are passed via the constructor — nothing is hardcoded. Input supports both arrow keys and WASD.
