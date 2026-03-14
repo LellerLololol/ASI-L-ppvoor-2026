@@ -195,13 +195,13 @@ class Enemy:
         rows = len(grid)
         cols = len(grid[0]) if rows else 0
         tc, tr = target
-        if 0 <= tr < rows and 0 <= tc < cols and grid[tr][tc] == 0:
+        if 0 <= tr < rows and 0 <= tc < cols and grid[tr][tc] != 1:
             return target
         for radius in range(1, max(rows, cols)):
             for dr in range(-radius, radius + 1):
                 for dc in range(-radius, radius + 1):
                     r, c = tr + dr, tc + dc
-                    if 0 <= r < rows and 0 <= c < cols and grid[r][c] == 0:
+                    if 0 <= r < rows and 0 <= c < cols and grid[r][c] != 1:
                         return (c, r)
         return target
 
@@ -252,13 +252,13 @@ class Enemy:
                 else:
                     # No path, already moving — check if we can keep going
                     nx, ny = cx + self.direction[0], cy + self.direction[1]
-                    if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0):
+                    if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] != 1):
                         # Blocked — pick a new random valid direction
                         next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
 
                 # Validate the chosen direction against the grid
                 nx, ny = cx + next_dir[0], cy + next_dir[1]
-                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == 0:
+                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] != 1:
                     self.direction = next_dir
                 else:
                     # Even the chosen direction is blocked — stop

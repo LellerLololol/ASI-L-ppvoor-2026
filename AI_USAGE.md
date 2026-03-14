@@ -277,8 +277,6 @@ Additionally, proactively updated `player.py`'s movement logic to use a `movemen
 
 ### Prompt 12
 
-**The prompt:**
-
 > "the collisions currently seem to work only if the centers of each object collide. so for gathering points or collisions between the player and the ghosts the edges must be checked instead"
 
 **Commits:**
@@ -306,3 +304,24 @@ This was resolved by replacing all grid coordinate checks with standard `pygame.
 The user's previous modification to increase speeds by 1.5x set `OBSTACLE_SPEED = 3`. The `MovingObstacle` class in `game/items/collectibles.py` still relied on the old logic (`pixel_x % 32 == 0`) to detect map intersections and turn away from walls. Because a speed of 3 doesn't divide 32 evenly, the obstacle skipped right past the alignment check and clipped directly through the walls.
 
 Fixed by refactoring `MovingObstacle.update()` to use the exact same float accumulator and pixel-by-pixel movement loop that the Player and Ghosts were upgraded to use in earlier commits. The obstacle now builds up fractional speed in an accumulator, extracts the integer distance, and processes wall collisions and turns one pixel at a time. This guarantees that the obstacle always perfectly slides onto `X % 32 == 0` alignments, reliably detecting and bouncing off walls regardless of its speed.
+
+> "I added background music for the game in the assets folder. Also make it so that if the player gets the speed power up the background music also gets faster."
+
+---
+
+### Prompt 14
+
+**The prompt:**
+
+> "I added background music for the game in the assets folder. Also make it so that if the player gets the speed powerup the background music also gets faster."
+
+**Commits:**
+
+- `78c437304d9a7705beafabfa484c89a85d61437d` - feat: Add dynamic background music that speeds up with player powerups
+
+**Explanation of changes:**
+The provided asset `assets/Hechizo_en_la_Pista.mp4` was a video file, which `pygame.mixer.music` cannot play natively. FFmpeg was used to strip the video and convert the audio track into a standard `bgm_normal.wav` file. Then, it was used again with the `-filter:a "atempo=1.5"` flag to generate a pre-sped-up `bgm_fast.wav` track.
+
+In `game/engine.py`, the `pygame.mixer` subsystem was initialized and `bgm_normal.wav` was set to endlessly loop upon game start. Logic was added to the main update loop so that when the player picks up a speed boost (or when the boost timer runs out), the engine calculates the exact playback position (`pygame.mixer.music.get_pos()`) and dynamically swaps between the normal and fast tracks using `pygame.mixer.music.play(-1, start=new_pos)`, maintaining a seamless chronological sync between the audio and gameplay state.
+
+---
