@@ -105,9 +105,9 @@ class Enemy:
             my_pos = self.get_grid_pos()
 
             if self.state == "EATEN":
-                # Head back to spawn
+                # Head back to spawn ignoring walls
                 spawn = (self.spawn_x, self.spawn_y)
-                self._path = astar.find_path(grid, my_pos, spawn)
+                self._path = astar.find_path(grid, my_pos, spawn, ignore_walls=True)
                 if my_pos == spawn:
                     self.state = "SCATTER"
                     self._path = []
@@ -230,6 +230,8 @@ class Enemy:
 
                 # Determine next desired direction
                 next_dir = self.direction
+                
+                is_eaten = (self.state == "EATEN")
 
                 if self._path and self._path_index < len(self._path):
                     # Follow the path
@@ -251,13 +253,13 @@ class Enemy:
                 else:
                     # No path, already moving — check if we can keep going
                     nx, ny = cx + self.direction[0], cy + self.direction[1]
-                    if not (0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] != 1):
+                    if not (0 <= ny < rows and 0 <= nx < cols and (is_eaten or grid[ny][nx] != 1)):
                         # Blocked — pick a new random valid direction
                         next_dir = wanderer.get_random_direction(grid, (cx, cy), self.direction)
 
                 # Validate the chosen direction against the grid
                 nx, ny = cx + next_dir[0], cy + next_dir[1]
-                if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] != 1:
+                if 0 <= ny < rows and 0 <= nx < cols and (is_eaten or grid[ny][nx] != 1):
                     self.direction = next_dir
                 else:
                     # Even the chosen direction is blocked — stop

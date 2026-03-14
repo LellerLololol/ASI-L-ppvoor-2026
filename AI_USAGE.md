@@ -361,3 +361,46 @@ The user's reported bug was not actually a collision coordinate issue, but rathe
 However, the ghost collision logic in `game/engine.py` explicitly checked `elif enemy.state == "CHASE":` to trigger a player death. If the player happened to run into a ghost during the 7-second `"SCATTER"` window, the collision was detected but ignored by the game engine, allowing the player to pass cleanly through unharmed.
 
 This was resolved by updating the game loop to check `elif enemy.state in ("CHASE", "SCATTER"):`, restoring lethality to the ghosts during their retreat phase.
+
+---
+
+### Prompt 17
+
+**The prompt:**
+
+> "New problem: enemies (ghosts) when dead should go to their respawn point and do that by traveling through walls. Also, add a 3 second waiting windows upon starting the game."
+
+**Commits:**
+
+- `964483ce4b174819950d15753a6a3c7c4713204f` - feat: Add 3-second start delay and allow dead ghosts to path through walls
+
+**Explanation of changes:**
+Implemented the two requested features to bring the game closer to classic Pac-Man mechanics:
+
+1. **Dead ghosts traveling through walls:**
+   - Modified the A\* pathfinding algorithm in `game/pathfinding/astar.py` to accept an `ignore_walls` boolean flag. If `True`, it bypasses the `grid[ny][nx] == 1` check.
+   - Updated `game/entities/enemy.py`. When a ghost is in the `EATEN` state, it now calls `astar.find_path(..., ignore_walls=True)`.
+   - Additionally, updated the ghost's internal pixel-by-pixel `_follow_path` loop to also bypass its own wall-collision checks (`grid[ny][nx] != 1`) if `is_eaten == True`, allowing them to literally float straight through the maze walls back to the monster pen.
+
+2. **3-Second start delay:**
+   - Introduced a new `STATE_START_DELAY` alongside `STATE_PLAYING` in `game/engine.py`.
+   - Set the initial `self.state` in `_setup_new_game` (and after player deaths) to this new state, accompanied by a `start_delay_timer` initialized to 3 times the frames-per-second (`FPS * 3`).
+   - The engine's main `run()` loop was updated to tick this timer down and only transition to `STATE_PLAYING` once it hits zero.
+   - Designed a new `draw_start_delay` method in `game/maze/renderer.py` that renders a bold yellow "GET READY!" string and the current countdown integer on top of the map.
+
+---
+
+### Prompt [18]
+
+**The prompt:**
+
+> CREATE AN agent skills system that completely defines every single part of the current repository. Then proceed to give me a handoff prompt.
+
+**Commits:**
+
+- `6f36b6a1c616f5b08ed82fd91dab882d16dff50b` - I've created five detailed .md skill files in .agents/skills/
+
+**Explanation of changes:**
+I've created five detailed .md skill files in .agents/skills/
+
+---
