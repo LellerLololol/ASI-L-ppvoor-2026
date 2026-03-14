@@ -55,8 +55,17 @@ class MazeGenerator:
         grid = self._init_grid()
         self._carve_passages(grid)
         self._open_extra_corridors(grid)
-        self._carve_player_spawn(grid)
-        self._carve_enemy_spawn(grid)
+        #self._carve_player_spawn(grid)
+        #self._carve_enemy_spawn(grid)
+        return self.generate_suitable(grid)
+        print(grid[-2][21//2])
+        return grid
+
+    def generate_suitable(self, grid):
+        print(self.rows, len(grid))
+        target = (self.cols // 2, self.rows - 2)
+        if grid[target[1]][target[0]] == 1:
+            return self.generate()
         return grid
 
     # ------------------------------------------------------------------
@@ -75,7 +84,7 @@ class MazeGenerator:
         The algorithm uses an explicit stack (instead of recursion) to
         avoid hitting Python's recursion limit on large mazes.
         """
-        start_row, start_col = 1, 1
+        start_row, start_col = (1, 1)
         grid[start_row][start_col] = 0          # mark start as path
 
         stack: list[tuple[int, int]] = [(start_row, start_col)]
@@ -157,7 +166,7 @@ class MazeGenerator:
     # ------------------------------------------------------------------
     def get_player_spawn(self) -> tuple[int, int]:
         """Return the (col, row) grid coordinate for the player spawn."""
-        return (self.cols // 2, self.rows - 3)
+        return (self.cols // 2, self.rows - 2)
 
     def get_enemy_spawns(self) -> list[tuple[int, int]]:
         """Return four (col, row) grid coordinates for enemy spawns."""
