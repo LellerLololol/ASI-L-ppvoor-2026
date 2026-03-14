@@ -377,7 +377,7 @@ This was resolved by updating the game loop to check `elif enemy.state in ("CHAS
 **Explanation of changes:**
 Three interconnected bugs prevented eaten ghosts from reliably respawning:
 
-1. **Spawn box cells blocked normal pathfinding:** The maze generator marks the spawn area with grid value `2`. All pathfinding modules (`wanderer.py`, `interceptor.py`) and the ghost's own movement validation treated only `0` as passable. So when an eaten ghost arrived at the spawn box and transitioned to SCATTER/CHASE, it immediately tried to path out using normal A*—but the `2`-cells were considered walls, trapping it permanently inside the box.
+1. **Spawn box cells blocked normal pathfinding:** The maze generator marks the spawn area with grid value `2`. All pathfinding modules (`wanderer.py`, `interceptor.py`) and the ghost's own movement validation treated only `0` as passable. So when an eaten ghost arrived at the spawn box and transitioned to SCATTER/CHASE, it immediately tried to path out using normal A\*—but the `2`-cells were considered walls, trapping it permanently inside the box.
 
 2. **Arrival check was timing-dependent:** The "have I reached spawn?" check (`my_pos == spawn`) was gated behind the repath cooldown timer (`_repath_cd`). This meant the ghost could physically sit on its spawn tile but wouldn't register as "arrived" until the cooldown happened to expire—often missing the check entirely at high eaten-speeds.
 
