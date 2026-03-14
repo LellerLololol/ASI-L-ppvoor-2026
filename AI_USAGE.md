@@ -93,11 +93,7 @@ Created the `.agents/skills/document_ai_usage/SKILL.md` file to formalize the pr
 
 **Commits:**
 
-<<<<<<< HEAD
 - `7df8635f27345b2361035a9ddb3ca4057f8e3230` - feat: Add Player class with grid-aligned movement and visual effects
-=======
-- `22323e2` - feat: Add Player class with grid-aligned movement and visual effects
->>>>>>> 683d2332160f8bfba508c4159c7022280d49da14
 
 **Explanation of changes:**
 Created `player.py` containing the `Player` class (extends `pygame.sprite.Sprite`) responsible for the Pac-Man character and movement system. The class loads and scales the user's 16×16 pixel art sprite, pre-computes directional variants (flip/rotate) so the character faces its movement direction, and implements grid-aligned movement with wall collision detection. Visual effects include configurable squash & stretch animation, directional eye pupil overlay aligned with the sprite's existing eyes, and a fading particle trail. All parameters (speed, squash amount, eye offset, trail lifetime, colors, pupil size/shift) are passed via the constructor — nothing is hardcoded. Input supports both arrow keys and WASD.
