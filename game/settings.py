@@ -35,6 +35,8 @@ COLOR_SPEED_BOOST = (100, 220, 255)    # Cyan lightning
 COLOR_HUD_BG      = (10, 10, 25)       # HUD bar background
 COLOR_HUD_TEXT    = (255, 255, 255)    # HUD text
 COLOR_GAME_OVER   = (255, 50, 50)      # Red game-over text
+COLOR_ENEMY_SPAWN = (255, 0, 0)
+
 
 # Ghost colors
 COLOR_BLINKY = (255, 0, 0)         # Red  - The Chaser

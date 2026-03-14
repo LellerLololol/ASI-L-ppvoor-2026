@@ -7,7 +7,7 @@ highlight to give them a classic retro-neon feel.
 
 import pygame
 from game.settings import (
-    CELL_SIZE, COLOR_WALL, COLOR_WALL_EDGE, COLOR_PATH,
+    CELL_SIZE, COLOR_WALL, COLOR_WALL_EDGE, COLOR_ENEMY_SPAWN, COLOR_PATH,
     COLOR_HUD_BG, COLOR_HUD_TEXT, HUD_HEIGHT, SCREEN_WIDTH,
     MAZE_COLS, MAZE_ROWS, PLAYER_LIVES,
 )
@@ -73,7 +73,7 @@ class MazeRenderer:
         # Main wall fill
         #pygame.draw.rect(surface, COLOR_WALL, rect)
         # Lighter border for depth
-        pygame.draw.rect(surface, (0, 255, 0), rect, width=1, border_radius=3)
+        pygame.draw.rect(surface, COLOR_ENEMY_SPAWN, rect, width=1, border_radius=3)
 
     # ------------------------------------------------------------------
     # HUD
