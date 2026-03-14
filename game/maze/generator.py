@@ -56,13 +56,10 @@ class MazeGenerator:
         self._carve_passages(grid)
         self._open_extra_corridors(grid)
         #self._carve_player_spawn(grid)
-        #self._carve_enemy_spawn(grid)
+        self._carve_enemy_spawn(grid)
         return self.generate_suitable(grid)
-        print(grid[-2][21//2])
-        return grid
 
     def generate_suitable(self, grid):
-        print(self.rows, len(grid))
         target = (self.cols // 2, self.rows - 2)
         if grid[target[1]][target[0]] == 1:
             return self.generate()
@@ -156,10 +153,10 @@ class MazeGenerator:
         center_col = self.cols // 2
         top_row = 2
         for dr in range(0, 3):
-            for dc in range(-2, 3):
+            for dc in range(-1, 2):
                 r, c = top_row + dr, center_col + dc
                 if 0 < r < self.rows - 1 and 0 < c < self.cols - 1:
-                    grid[r][c] = 0
+                    grid[r][c] = 2
 
     # ------------------------------------------------------------------
     # Utility

@@ -39,10 +39,16 @@ class MazeRenderer:
             )
             self._cached_surface.fill(COLOR_PATH)
 
+            rememberedEnemyCell = []
+
             for row in range(len(grid)):
                 for col in range(len(grid[row])):
                     if grid[row][col] == 1:
                         self._draw_wall_cell(self._cached_surface, col, row)
+                    if grid[row][col] == 2:
+                        rememberedEnemyCell.append([col, row])
+            
+            self._draw_enemey_spawn(self._cached_surface, rememberedEnemyCell)
 
         surface.blit(self._cached_surface, (0, 0))
 
@@ -56,6 +62,18 @@ class MazeRenderer:
         pygame.draw.rect(surface, COLOR_WALL, rect)
         # Lighter border for depth
         pygame.draw.rect(surface, COLOR_WALL_EDGE, rect, width=1, border_radius=3)
+
+    def _draw_enemey_spawn(self, surface: pygame.Surface, cells) -> None:
+        dx, dy = (-cells[0][0] + cells[-1][0]) + 1, (-cells[0][1] + cells[-1][1]) + 1
+        """Draw a single wall cell with a slight 3-D edge effect."""
+        x = cells[len(cells) // 2][0] * CELL_SIZE - CELL_SIZE
+        y = cells[len(cells) // 2][1] * CELL_SIZE - CELL_SIZE
+        rect = pygame.Rect(x, y, CELL_SIZE * dx, CELL_SIZE * dy)
+
+        # Main wall fill
+        #pygame.draw.rect(surface, COLOR_WALL, rect)
+        # Lighter border for depth
+        pygame.draw.rect(surface, (0, 255, 0), rect, width=1, border_radius=3)
 
     # ------------------------------------------------------------------
     # HUD
